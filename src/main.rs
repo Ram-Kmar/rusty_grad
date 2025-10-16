@@ -90,6 +90,8 @@ fn main() {
         "this is e_grad{:?}",
         e.clone().grad.as_ref().unwrap().clone().borrow().get_data()
     );
+    print!("hi  "
+    );
     // let a1 = a.clone().data.clone();
     // let b1 = b.clone().data.clone();
     // let a_vec = a1.get_data();
