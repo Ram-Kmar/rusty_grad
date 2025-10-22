@@ -7,7 +7,7 @@ use crate::shared::{Shared, new_shared};
 use crate::storage::{CpuStorage, Storage};
 use crate::tensor::{Tensor, TensorHandle};
 use crate::traits::TensorFloat;
-use crate::{cpubinaryops, cpuurnaryops,shared};
+use crate::{cpubinaryops, cpuurnaryops, shared};
 use std::any::Any;
 use std::cell::RefCell;
 use std::ops::{Add, Div, Mul, Sub};
@@ -18,86 +18,110 @@ use std::ops::{Add, Div, Mul, Sub};
 // pub struct CpuBackend<T>;
 impl<T: TensorFloat> CpuStorage<T> {
     pub fn add(
-        a: Shared<dyn Storage<Elem = T>>,
-        b: Shared<dyn Storage<Elem = T>>,
+        a: Shared<RefCell<dyn Storage<Elem = T>>>,
+        b: Shared<RefCell<dyn Storage<Elem = T>>>,
     ) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpubinaryops::add(a.get_data(), b.get_data()),
+            data: cpubinaryops::add(a.borrow().get_data(), b.borrow().get_data()),
         };
         new_storage
     }
     pub fn sub(
-        a: Shared<dyn Storage<Elem = T>>,
-        b: Shared<dyn Storage<Elem = T>>,
+        a: Shared<RefCell<dyn Storage<Elem = T>>>,
+        b: Shared<RefCell<dyn Storage<Elem = T>>>,
     ) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpubinaryops::sub(a.get_data(), b.get_data()),
+            data: cpubinaryops::sub(a.borrow().get_data(), b.borrow().get_data()),
         };
         new_storage
     }
     pub fn mul(
-        a: Shared<dyn Storage<Elem = T>>,
-        b: Shared<dyn Storage<Elem = T>>,
+        a: Shared<RefCell<dyn Storage<Elem = T>>>,
+        b: Shared<RefCell<dyn Storage<Elem = T>>>,
     ) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpubinaryops::sub(a.get_data(), b.get_data()),
+            data: cpubinaryops::mul(a.borrow().get_data(), b.borrow().get_data()),
         };
         new_storage
     }
     pub fn div(
-        a: Shared<dyn Storage<Elem = T>>,
-        b: Shared<dyn Storage<Elem = T>>,
+        a: Shared<RefCell<dyn Storage<Elem = T>>>,
+        b: Shared<RefCell<dyn Storage<Elem = T>>>,
     ) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpubinaryops::div(a.get_data(), b.get_data()),
+            data: cpubinaryops::div(a.borrow().get_data(), b.borrow().get_data()),
         };
         new_storage
     }
-    pub fn relu(a: Shared<dyn Storage<Elem = T>>) -> CpuStorage<T> {
+    pub fn relu(a: Shared<RefCell<dyn Storage<Elem = T>>>) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpuurnaryops::relu(a.get_data()),
+            data: cpuurnaryops::relu(a.borrow().get_data()),
         };
         new_storage
     }
-    pub fn sigmoid(a: Shared<dyn Storage<Elem = T>>) -> CpuStorage<T> {
+    pub fn sigmoid(a: Shared<RefCell<dyn Storage<Elem = T>>>) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpuurnaryops::sigmoid(a.get_data()),
+            data: cpuurnaryops::sigmoid(a.borrow().get_data()),
         };
         new_storage
     }
-    pub fn tanh(a: Shared<dyn Storage<Elem = T>>) -> CpuStorage<T> {
+    pub fn tanh(a: Shared<RefCell<dyn Storage<Elem = T>>>) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpuurnaryops::tanh(a.get_data()),
+            data: cpuurnaryops::tanh(a.borrow().get_data()),
         };
         new_storage
     }
-    pub fn exp(a: Shared<dyn Storage<Elem = T>>) -> CpuStorage<T> {
+    pub fn exp(a: Shared<RefCell<dyn Storage<Elem = T>>>) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpuurnaryops::exp(a.get_data()),
+            data: cpuurnaryops::exp(a.borrow().get_data()),
         };
         new_storage
     }
-    pub fn neg(a: Shared<dyn Storage<Elem = T>>) -> CpuStorage<T> {
+    pub fn neg(a: Shared<RefCell<dyn Storage<Elem = T>>>) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpuurnaryops::neg(a.get_data()),
+            data: cpuurnaryops::neg(a.borrow().get_data()),
         };
         new_storage
     }
-    pub fn abs(a: Shared<dyn Storage<Elem = T>>) -> CpuStorage<T> {
+    pub fn abs(a: Shared<RefCell<dyn Storage<Elem = T>>>) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpuurnaryops::abs(a.get_data()),
+            data: cpuurnaryops::abs(a.borrow().get_data()),
         };
         new_storage
     }
-    pub fn log(a: Shared<dyn Storage<Elem = T>>) -> CpuStorage<T> {
+    pub fn log(a: Shared<RefCell<dyn Storage<Elem = T>>>) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpuurnaryops::log(a.get_data()),
+            data: cpuurnaryops::log(a.borrow().get_data()),
         };
         new_storage
     }
-    pub fn sqrt(a: Shared<dyn Storage<Elem = T>>) -> CpuStorage<T> {
+    pub fn sqrt(a: Shared<RefCell<dyn Storage<Elem = T>>>) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpuurnaryops::sqrt(a.get_data()),
+            data: cpuurnaryops::sqrt(a.borrow().get_data()),
+        };
+        new_storage
+    }
+    pub fn SV_add(input: Shared<RefCell<dyn Storage<Elem = T>>>, scalar: T) -> CpuStorage<T> {
+        let new_storage = CpuStorage {
+            data: cpubinaryops::SV_add(input.borrow().get_data(), scalar),
+        };
+        new_storage
+    }
+    pub fn SV_mul(input: Shared<RefCell<dyn Storage<Elem = T>>>, scalar: T) -> CpuStorage<T> {
+        let new_storage = CpuStorage {
+            data: cpubinaryops::SV_add(input.borrow().get_data(), scalar),
+        };
+        new_storage
+    }
+    pub fn SV_sub(input: Shared<RefCell<dyn Storage<Elem = T>>>, scalar: T) -> CpuStorage<T> {
+        let new_storage = CpuStorage {
+            data: cpubinaryops::SV_add(input.borrow().get_data(), scalar),
+        };
+        new_storage
+    }
+    pub fn sum(input: Shared<RefCell<dyn Storage<Elem = T>>>) -> CpuStorage<T> {
+        let new_storage = CpuStorage {
+            data: cpuurnaryops::sum(input.borrow().get_data()),
         };
         new_storage
     }
@@ -117,33 +141,33 @@ impl<T: TensorFloat> CpuStorage<T> {
     //     new_storage
     // }
 
-    pub fn power(a: Shared<dyn Storage<Elem = T>>, power: T) -> CpuStorage<T> {
+    pub fn power(a: Shared<RefCell<dyn Storage<Elem = T>>>, power: T) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpuurnaryops::power(a.get_data(), power),
+            data: cpuurnaryops::power(a.borrow().get_data(), power),
         };
         new_storage
     }
-    pub fn square(a: Shared<dyn Storage<Elem = T>>) -> CpuStorage<T> {
+    pub fn square(a: Shared<RefCell<dyn Storage<Elem = T>>>) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpuurnaryops::square(a.get_data()),
+            data: cpuurnaryops::square(a.borrow().get_data()),
         };
         new_storage
     }
-    pub fn mean(a: Shared<dyn Storage<Elem = T>>) -> CpuStorage<T> {
+    pub fn mean(a: Shared<RefCell<dyn Storage<Elem = T>>>) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpuurnaryops::mean(a.get_data()),
+            data: cpuurnaryops::mean(a.borrow().get_data()),
         };
         new_storage
     }
     pub fn matmul(
-        a: Shared<dyn Storage<Elem = T>>,
-        b: Shared<dyn Storage<Elem = T>>,
+        a: Shared<RefCell<dyn Storage<Elem = T>>>,
+        b: Shared<RefCell<dyn Storage<Elem = T>>>,
         m: usize,
         k: usize,
         n: usize,
     ) -> CpuStorage<T> {
         let new_storage = CpuStorage {
-            data: cpubinaryops::matmul(a.get_data(), b.get_data(), m, k, n),
+            data: cpubinaryops::matmul(a.borrow().get_data(), b.borrow().get_data(), m, k, n),
         };
         new_storage
     }
@@ -171,7 +195,7 @@ impl<T: TensorFloat> CpuStorage<T> {
         let temp1 = temp1.borrow();
         let input1 = temp1.get_data();
         let input2 = cpubinaryops::transpose(
-            aparent_data.data.get_data(),
+            aparent_data.data.borrow().get_data(),
             aparent_data.shape[0],
             aparent_data.shape[1],
         );
@@ -204,11 +228,10 @@ impl<T: TensorFloat> CpuStorage<T> {
     pub fn relu_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
         let mut data: Vec<T> = Vec::new();
         let temp0 = parent.data.clone();
-        let parent_data = temp0.get_data();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = cpuurnaryops::relu_derivative(parent_data, child_grad);
+        data = cpuurnaryops::relu_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -229,11 +252,10 @@ impl<T: TensorFloat> CpuStorage<T> {
     pub fn sigmodi_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
         let mut data: Vec<T> = Vec::new();
         let temp0 = parent.data.clone();
-        let parent_data = temp0.get_data();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = cpuurnaryops::sigmoid_derivative(parent_data, child_grad);
+        data = cpuurnaryops::sigmoid_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -243,11 +265,10 @@ impl<T: TensorFloat> CpuStorage<T> {
     pub fn tanh_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
         let mut data: Vec<T> = Vec::new();
         let temp0 = parent.data.clone();
-        let parent_data = temp0.get_data();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = cpuurnaryops::tanh_derivative(parent_data, child_grad);
+        data = cpuurnaryops::tanh_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -257,11 +278,10 @@ impl<T: TensorFloat> CpuStorage<T> {
     pub fn exp_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
         let mut data: Vec<T> = Vec::new();
         let temp0 = parent.data.clone();
-        let parent_data = temp0.get_data();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = cpuurnaryops::exp_derivative(parent_data, child_grad);
+        data = cpuurnaryops::exp_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -271,11 +291,10 @@ impl<T: TensorFloat> CpuStorage<T> {
     pub fn log_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
         let mut data: Vec<T> = Vec::new();
         let temp0 = parent.data.clone();
-        let parent_data = temp0.get_data();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = cpuurnaryops::log_derivative(parent_data, child_grad);
+        data = cpuurnaryops::log_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -285,11 +304,10 @@ impl<T: TensorFloat> CpuStorage<T> {
     pub fn abs_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
         let mut data: Vec<T> = Vec::new();
         let temp0 = parent.data.clone();
-        let parent_data = temp0.get_data();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = cpuurnaryops::abs_derivative(parent_data, child_grad);
+        data = cpuurnaryops::abs_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -299,11 +317,10 @@ impl<T: TensorFloat> CpuStorage<T> {
     pub fn square_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
         let mut data: Vec<T> = Vec::new();
         let temp0 = parent.data.clone();
-        let parent_data = temp0.get_data();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = cpuurnaryops::square_derivative(parent_data, child_grad);
+        data = cpuurnaryops::square_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -313,11 +330,10 @@ impl<T: TensorFloat> CpuStorage<T> {
     pub fn sqrt_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
         let mut data: Vec<T> = Vec::new();
         let temp0 = parent.data.clone();
-        let parent_data = temp0.get_data();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = cpuurnaryops::sqrt_derivative(parent_data, child_grad);
+        data = cpuurnaryops::sqrt_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -327,11 +343,23 @@ impl<T: TensorFloat> CpuStorage<T> {
     pub fn mean_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
         let mut data: Vec<T> = Vec::new();
         let temp0 = parent.data.clone();
-        let parent_data = temp0.get_data();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = cpuurnaryops::mean_derivative(parent_data, child_grad);
+        data = cpuurnaryops::mean_derivative(temp0.borrow().get_data(), child_grad);
+        drop(temp0);
+        drop(temp1);
+        let temp1 = parent.grad.as_ref().unwrap().clone();
+        let mut parent_grad = temp1.borrow_mut();
+        parent_grad.add_grad(data);
+    }
+    pub fn SV_mul_derivate(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
+        let mut data: Vec<T> = Vec::new();
+        let temp0 = parent.data.clone();
+        let temp1 = child.grad.as_ref().unwrap().clone();
+        let temp1 = temp1.borrow();
+        let child_grad = temp1.get_data();
+        data = cpubinaryops::SV_mul_derivate(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -369,6 +397,9 @@ impl<T: TensorFloat> Storage for CpuStorage<T> {
     fn len(&self) -> usize {
         self.data.len()
     }
+    fn update_data(&mut self, a: Vec<T>) {
+        self.data = a
+    }
     fn from_data(data: Vec<Self::Elem>) -> Self {
         Self { data }
     }
@@ -399,6 +430,19 @@ impl<T: TensorFloat> Storage for CpuStorage<T> {
         }
         data
     }
+}
+pub fn SV_add_derivate(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
+    let mut data: Vec<T> = Vec::new();
+    let temp0 = parent.data.clone();
+    let temp1 = child.grad.as_ref().unwrap().clone();
+    let temp1 = temp1.borrow();
+    let child_grad = temp1.get_data();
+    data = cpuurnaryops::SV_add_derivate(temp0.borrow().get_data(), child_grad);
+    drop(temp0);
+    drop(temp1);
+    let temp1 = parent.grad.as_ref().unwrap().clone();
+    let mut parent_grad = temp1.borrow_mut();
+    parent_grad.add_grad(data);
 }
 
 // impl<T: TensorFloat> Sub for TensorHandle<T> {

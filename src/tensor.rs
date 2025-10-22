@@ -17,7 +17,7 @@ pub struct Tensor<T: TensorFloat> {
     pub shape: Vec<usize>,
     // NOTE: The `data` field is now a trait object.
     // It can hold a CpuStorage, CudaStorage, or any other type that implements the Storage trait.
-    pub data: Shared<dyn Storage<Elem = T>>,
+    pub data: Shared<RefCell<dyn Storage<Elem = T>>>,
     pub grad: Option<Shared<RefCell<dyn Storage<Elem = T>>>>,
     pub grad_require: bool,
     pub operation: Option<Vec<String>>,
@@ -48,9 +48,9 @@ impl<T: TensorFloat> Tensor<T> {
 
         // TODO: This should be dispatched via a backend, but for now, we hardcode CPU
         // to demonstrate the structure.
-        let data: Shared<dyn Storage<Elem = T>> = match device {
-            Device::Cpu => Shared::new(CpuStorage::new(size)),
-            Device::Cuda => Shared::new(CpuStorage::new(size)),
+        let data = match device {
+            Device::Cpu => Shared::new(RefCell::new(CpuStorage::new(size))),
+            Device::Cuda => Shared::new(RefCell::new(CpuStorage::new(size))),
         };
         let grad = if grad_require {
             let grad_storage: Shared<RefCell<dyn Storage<Elem = T>>> = match device {
@@ -78,9 +78,9 @@ impl<T: TensorFloat> Tensor<T> {
     pub fn zeros(shape: Vec<usize>, grad_require: bool, device: Device) -> TensorHandle<T> {
         let size = shape.iter().product();
 
-        let data: Shared<dyn Storage<Elem = T>> = match device {
-            Device::Cpu => Shared::new(CpuStorage::zeros(size)),
-            Device::Cuda => Shared::new(CpuStorage::zeros(size)),
+        let data = match device {
+            Device::Cpu => Shared::new(RefCell::new(CpuStorage::new(size))),
+            Device::Cuda => Shared::new(RefCell::new(CpuStorage::new(size))),
         };
         let grad = if grad_require {
             let grad_storage: Shared<RefCell<dyn Storage<Elem = T>>> = match device {
@@ -105,9 +105,9 @@ impl<T: TensorFloat> Tensor<T> {
     pub fn ones(shape: Vec<usize>, grad_require: bool, device: Device) -> TensorHandle<T> {
         let size = shape.iter().product();
 
-        let data: Shared<dyn Storage<Elem = T>> = match device {
-            Device::Cpu => Shared::new(CpuStorage::zeros(size)),
-            Device::Cuda => Shared::new(CpuStorage::zeros(size)),
+        let data = match device {
+            Device::Cpu => Shared::new(RefCell::new(CpuStorage::new(size))),
+            Device::Cuda => Shared::new(RefCell::new(CpuStorage::new(size))),
         };
         let grad = if grad_require {
             let grad_storage: Shared<RefCell<dyn Storage<Elem = T>>> = match device {
@@ -141,9 +141,9 @@ impl<T: TensorFloat> Tensor<T> {
         device: Device,
     ) -> TensorHandle<T> {
         let size = shape.iter().product();
-        let data: Shared<dyn Storage<Elem = T>> = match device {
-            Device::Cpu => Shared::new(CpuStorage::from_data(data)),
-            Device::Cuda => Shared::new(CpuStorage::zeros(size)),
+        let data = match device {
+            Device::Cpu => Shared::new(RefCell::new(CpuStorage::new(size))),
+            Device::Cuda => Shared::new(RefCell::new(CpuStorage::new(size))),
         };
         let grad = if grad_require {
             let grad_storage: Shared<RefCell<dyn Storage<Elem = T>>> = match device {
@@ -173,7 +173,7 @@ impl<T: TensorFloat> fmt::Debug for Tensor<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Tensor")
             .field("shape", &self.shape)
-            .field("device", &self.data.device())
+            .field("device", &self.data.borrow().device())
             .field("grad_require", &self.grad_require)
             .field("operation", &self.operation)
             .finish()
@@ -186,7 +186,7 @@ impl<T: TensorFloat> fmt::Display for Tensor<T> {
             f,
             "Tensor(shape={:?}, device={:?})",
             self.shape,
-            self.data.device()
+            self.data.borrow().device()
         )
     }
 }
@@ -209,45 +209,3 @@ impl<T: TensorFloat> TensorHandle<T> {
     }
 }
 
-// impl<T: TensorFloat> Default for TensorHandle<T> {
-//     fn default() -> Self {
-//         Tensor::new()
-//     }
-// }
-impl<T: TensorFloat> TensorHandle<T> {
-    // pub fn backward(&self) {
-    //     let sorted_nodes = self.build_topological_sort();
-    //     self.grad.as_ref().unwrap().borrow_mut().fill(); // fill method is not defined on either on tensor struct or cpustorage struct
-    //
-    //     for node in sorted_nodes.iter().rev() {
-    //
-    //
-    //     }
-    // }
-    // fn build_topological_sort(&self) -> Vec<TensorHandle<T>> {
-    //     let mut sorted = Vec::new();
-    //     let mut visited = HashSet::new();
-    //
-    //     fn visit<T: TensorFloat>(
-    //         node: &TensorHandle<T>,
-    //         sorted: &mut Vec<TensorHandle<T>>,
-    //         visited: &mut HashSet<*const Tensor<T>>,
-    //     ) {
-    //         let node_ptr = Shared::as_ptr(&node.0);
-    //         if visited.contains(&node_ptr) {
-    //             return;
-    //         }
-    //         visited.insert(node_ptr);
-    //
-    //         if let Some(parents) = &node.parent {
-    //             for parent in parents {
-    //                 visit(&TensorHandle(parent.clone()), sorted, visited);
-    //             }
-    //         }
-    //         sorted.push(node.clone());
-    //     }
-    //
-    //     visit(self, &mut sorted, &mut visited);
-    //     sorted
-    // }
-}

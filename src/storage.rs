@@ -15,6 +15,7 @@ pub trait Storage: 'static + Any {
     fn as_any(&self) -> &dyn Any;
 
     fn get_data(&self) -> &Vec<Self::Elem>;
+    fn update_data(&mut self, a: Vec<Self::Elem>);
 
     // fn get_mut_data(self) -> Self;
 

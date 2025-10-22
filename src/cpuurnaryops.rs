@@ -1,5 +1,6 @@
 use crate::storage::Storage;
 use crate::{shared::Shared, traits::TensorFloat};
+use std::iter::Sum;
 
 pub fn relu<T: TensorFloat>(input: &Vec<T>) -> Vec<T> {
     input
@@ -47,6 +48,10 @@ pub fn mean<T: TensorFloat>(input: &Vec<T>) -> Vec<T> {
     let sum: T = input.iter().fold(T::zero(), |acc, &x| acc + x);
     let mean = sum / T::from(input.len() as f64).unwrap();
     vec![mean]
+}
+pub fn sum<T: TensorFloat + Sum>(input: &Vec<T>) -> Vec<T> {
+    let sum: T = input.iter().copied().sum();
+    vec![sum]
 }
 // feature needs to work on
 // pub fn sum<T: TensorFloat>(

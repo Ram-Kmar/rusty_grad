@@ -6,6 +6,7 @@ mod cpuurnaryops;
 mod device;
 mod error;
 mod gemm;
+// mod hrm;
 mod initializers;
 mod tensorbackprop;
 mod tensorurnaryops;
@@ -18,11 +19,14 @@ mod tensorbinaryops;
 mod traits;
 
 use crate::backend::Backend;
+use crate::cpuurnaryops::sigmoid;
 // use crate::cpu_backend::CpuBackend;
 use crate::device::Device;
 use crate::error::Result;
+use crate::optimizer::Sgd;
 use crate::storage::{CpuStorage, Storage};
 use crate::tensor::{Tensor, TensorHandle};
+use crate::tensorbinaryops::TensorBinaryOps;
 use crate::tensorurnaryops::TensorUrnaryOps;
 use crate::traits::TensorFloat;
 use std::any::type_name;
@@ -52,24 +56,65 @@ fn print_type_of<T>(_: &T) {
 // fn convert_t<T:TensorFloat>(input: Vec<f32>){
 //     input
 // }
+pub fn give_t<T: TensorFloat>(input: f64) -> T {
+    let epsilon = T::from(0.000000001).unwrap();
+    epsilon
+}
 
 fn main() {
-    let a = Tensor::<f32>::new(vec![2, 4], true, Device::Cpu);
+    let x = Tensor::<f32>::new(vec![1, 4], true, Device::Cpu);
+    let y = Tensor::<f32>::new(vec![1, 1], true, Device::Cpu);
+    let w1 = Tensor::<f32>::new(vec![4, 4], true, Device::Cpu);
+    let w2 = Tensor::<f32>::new(vec![4, 20], true, Device::Cpu);
+    let w3 = Tensor::<f32>::new(vec![20, 4], true, Device::Cpu);
+    let sgd = Sgd {
+        lr: 0.01,
+        momentum: 0.0,
+        weight_decay: 0.0,
+        nesterov: false,
+    };
+    for i in 0..10 {
+        let ir = TensorHandle::matmul(x.0.clone(), w1.0.clone());
+        ir.sigmoid();
+        let ir2 = TensorHandle::matmul(ir.0.clone(), w2.0.clone());
+        ir2.sigmoid();
+        let result = TensorHandle::matmul(ir2.0.clone(), w3.0.clone());
+        let epsilon = give_t(0.000000001);
+        let ir1 = TensorHandle::SV_add(result.clone(), epsilon);
+        let irlog = ir1.log();
+        let irmul = TensorHandle::matmul(result.0.clone(), irlog.0.clone());
+        let irloss = irmul.sum();
+        let loss = irloss.neg();
+        loss.backward();
+        sgd.update(&loss);
+        // loss = -np.sum(y_true * np.log(y_pred + epsilon))
+    }
+
     let b = Tensor::<f32>::new(vec![4, 3], true, Device::Cpu);
+    let sgd = Sgd {
+        lr: 0.01,
+        momentum: 0.0,
+        weight_decay: 0.0,
+        nesterov: false,
+    };
+
     println!(
         "A = torch.tensor( {:?}, requires_grad = True)",
-        a.clone().data.get_data()
+        a.clone().data.borrow().get_data()
     );
     println!(
         "B = torch.tensor( {:?}, requires_grad = True)",
-        b.clone().data.get_data()
+        b.clone().data.borrow().get_data()
     );
     let c = TensorHandle::matmul(a.0.clone(), b.0.clone());
-    let d = c.power(5.0);
+    println!(
+        "C = torch.tensor( {:?}, requires_grad = True)",
+        c.clone().data.borrow().get_data()
+    );
     let e = d.sigmoid();
     println!(
         "D = torch.tensor( {:?}, requires_grad = True)",
-        d.clone().data.get_data()
+        d.clone().data.borrow().get_data()
     );
     // let c = TensorHandle::matmul(a.0.clone(), b.0.clone());
     e.backward();
@@ -90,8 +135,24 @@ fn main() {
         "this is e_grad{:?}",
         e.clone().grad.as_ref().unwrap().clone().borrow().get_data()
     );
-    print!("hi  "
+    sgd.update(&e);
+    println!(
+        "A = torch.tensor( {:?}, requires_grad = True)",
+        a.clone().data.borrow().get_data()
     );
+    println!(
+        "B = torch.tensor( {:?}, requires_grad = True)",
+        b.clone().data.borrow().get_data()
+    );
+    println!(
+        "C = torch.tensor( {:?}, requires_grad = True)",
+        c.clone().data.borrow().get_data()
+    );
+    println!(
+        "D = torch.tensor( {:?}, requires_grad = True)",
+        d.clone().data.borrow().get_data()
+    );
+
     // let a1 = a.clone().data.clone();
     // let b1 = b.clone().data.clone();
     // let a_vec = a1.get_data();

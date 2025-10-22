@@ -1,0 +1,2 @@
+this is what i think we need another struct called data and which is gonna element of data field cpu struct and every operation should implement for this struct not that higher level
+2.every ops person have implemented every layer ,so we can just implementation we want at each layers.

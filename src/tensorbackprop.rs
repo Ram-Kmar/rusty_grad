@@ -1,9 +1,9 @@
-use crate::optimizer::sgd;
+// use crate::optimizer::sgd;
+use crate::cpu_backend;
 use crate::shared::{Shared, new_shared};
 use crate::storage::CpuStorage;
 use crate::tensor::{Tensor, TensorHandle};
 use crate::traits::TensorFloat;
-use crate::{cpu_backend, optimizer};
 use std::clone;
 use std::collections::HashSet;
 // pub fn add_backward<T: TensorFloat>(grad_output: &[T], _a: &Tensor<T>, _b: &Tensor<T>) -> (Vec<T>, Vec<T>) {
@@ -116,24 +116,22 @@ impl<T: TensorFloat> TensorHandle<T> {
                         let child = node.0.clone();
                         CpuStorage::mean_derivative(parent, child);
                     }
+                    "SV_mul" => {
+                        let parent = node.parent.as_ref().unwrap()[0].clone();
+                        let child = node.0.clone();
+                        CpuStorage::SV_mul_derivate(parent, child);
+                    }
+                    "SV_add" => {
+                        let parent = node.parent.as_ref().unwrap()[0].clone();
+                        let child = node.0.clone();
+                        CpuStorage::SV_add_derivate(parent, child);
+                    }
                     _ => {}
                 }
             }
         }
     }
-    fn update(&self) {
-        let sorted = self.build_topological_sort();
-        for node in sorted.iter() {
-            let lr = T::from(0.001).unwrap();
-            let data = optimizer::sgd(
-                node.data.get_data(),
-                node.grad.as_ref().unwrap().clone().borrow().get_data(),
-                lr,
-            );
-            node.data.clone().fill_data(data);
-        }
-    }
-    fn build_topological_sort(&self) -> Vec<TensorHandle<T>> {
+    pub fn build_topological_sort(&self) -> Vec<TensorHandle<T>> {
         let mut sorted = Vec::new();
         let mut visited = HashSet::new();
 

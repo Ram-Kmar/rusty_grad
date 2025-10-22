@@ -13,11 +13,12 @@ pub trait TensorUrnaryOps<T: TensorFloat> {
     fn log(&self) -> TensorHandle<T>;
     fn neg(&self) -> TensorHandle<T>;
     fn abs(&self) -> TensorHandle<T>;
+    fn sum(&self) -> TensorHandle<T>;
     fn square(&self) -> TensorHandle<T>;
     fn sqrt(&self) -> TensorHandle<T>;
     fn mean(&self) -> TensorHandle<T>;
     fn power(&self, power: T) -> TensorHandle<T>;
-    fn sum(&self, access_dim: usize) -> TensorHandle<T>;
+    // fn sum(&self, access_dim: usize) -> TensorHandle<T>;
 }
 
 impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
@@ -26,7 +27,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -46,7 +47,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -66,7 +67,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -86,7 +87,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -100,13 +101,32 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             parent: Some(vec![self.0.clone()]),
         }))
     }
+    fn sum(&self) -> TensorHandle<T> {
+        let data = CpuStorage::sum(self.data.clone());
+        let grad_require = self.grad_require;
+        TensorHandle(new_shared(Tensor {
+            shape: self.shape.clone(),
+            data: Shared::new(RefCell::new(data)),
+            grad: if grad_require {
+                Some(Shared::new(RefCell::new(CpuStorage::zeros(
+                    self.shape.iter().product(),
+                ))))
+            } else {
+                None
+            },
+            grad_require,
+            operation: Some(vec!["log".to_string()]),
+            is_child: true,
+            parent: Some(vec![self.0.clone()]),
+        }))
+    }
 
     fn log(&self) -> TensorHandle<T> {
         let data = CpuStorage::log(self.data.clone());
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -126,7 +146,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -146,7 +166,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -166,7 +186,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -186,7 +206,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -200,31 +220,31 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             parent: Some(vec![self.0.clone()]),
         }))
     }
-    fn sum(&self, access_dim: usize) -> TensorHandle<T> {
-        let access_dim = self.shape[access_dim];
-        let data = CpuStorage::sum(self.data.clone(), self.shape.clone(), access_dim);
-        let grad_require = self.grad_require;
-        TensorHandle(new_shared(Tensor {
-            shape: vec![1],
-            data: Shared::new(data),
-            grad: if grad_require {
-                Some(Shared::new(RefCell::new(CpuStorage::zeros(1))))
-            } else {
-                None
-            },
-            grad_require,
-            operation: Some(vec!["mean".to_string()]),
-            is_child: true,
-            parent: Some(vec![self.0.clone()]),
-        }))
-    }
+    // fn sum(&self, access_dim: usize) -> TensorHandle<T> {
+    //     let access_dim = self.shape[access_dim];
+    //     let data = CpuStorage::(self.data.clone(), self.shape.clone(), access_dim);
+    //     let grad_require = self.grad_require;
+    //     TensorHandle(new_shared(Tensor {
+    //         shape: vec![1],
+    //         data: Shared::new(RefCell::new(data)),
+    //         grad: if grad_require {
+    //             Some(Shared::new(RefCell::new(CpuStorage::zeros(1))))
+    //         } else {
+    //             None
+    //         },
+    //         grad_require,
+    //         operation: Some(vec!["mean".to_string()]),
+    //         is_child: true,
+    //         parent: Some(vec![self.0.clone()]),
+    //     }))
+    // }
 
     fn mean(&self) -> TensorHandle<T> {
         let data = CpuStorage::mean(self.data.clone());
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: vec![1],
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(1))))
             } else {
@@ -241,7 +261,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),

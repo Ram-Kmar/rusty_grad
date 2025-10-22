@@ -1,4 +1,5 @@
 // use crate::cpu_backend;
+use crate::device::Device;
 use crate::shared::{Shared, new_shared};
 use crate::storage::{CpuStorage, Storage};
 use crate::tensor::{Tensor, TensorHandle};
@@ -6,6 +7,99 @@ use crate::traits::TensorFloat;
 use std::cell::RefCell;
 use std::ops::{Add, Div, Mul, Sub};
 use std::sync::Arc;
+// pub trait TensorBinaryOps<T: TensorFloat> {
+//     // fn relu(&self) -> TensorHandle<T>;
+//     fn SV_mul(a: &T, b: &Vec<T>) -> CpuStorage<T>;
+//     fn SV_add(a: &T, b: &Vec<T>) -> CpuStorage<T>;
+//     fn SV_sub(a: &T, b: &Vec<T>) -> CpuStorage<T>;
+//     // fn sigmoid(&self) -> TensorHandle<T>;
+//     // fn tanh(&self) -> TensorHandle<T>;
+//     // fn exp(&self) -> TensorHandle<T>;
+//     // fn log(&self) -> TensorHandle<T>;
+//     // fn neg(&self) -> TensorHandle<T>;
+//     // fn abs(&self) -> TensorHandle<T>;
+//     // fn square(&self) -> TensorHandle<T>;
+//     // fn sqrt(&self) -> TensorHandle<T>;
+//     // fn mean(&self) -> TensorHandle<T>;
+//     // fn power(&self, power: T) -> TensorHandle<T>;
+// }
+impl<T: TensorFloat> TensorHandle<T> {
+    pub fn SV_add(input: TensorHandle<T>, scalar: T, which_store: String) -> TensorHandle<T> {
+        let data;
+        if which_store == "grad" {
+            data = CpuStorage::SV_add(input.grad.clone().unwrap(), scalar);
+        } else {
+            data = CpuStorage::SV_add(input.data.clone(), scalar);
+        }
+        let grad_require = input.grad_require; // is the value is move or copy
+        TensorHandle(new_shared(Tensor {
+            shape: vec![input.shape[0], input.shape[1]],
+            data: Shared::new(RefCell::new(data)),
+            grad: if grad_require {
+                Some(Shared::new(RefCell::new(CpuStorage::ones(
+                    input.shape[0] * input.shape[1],
+                ))))
+            } else {
+                None
+            },
+            grad_require,
+            operation: Some(vec!["SV_add".to_string()]),
+            is_child: true,
+            parent: Some(vec![input.0.clone()]),
+        }))
+    }
+    pub fn SV_sub(input: TensorHandle<T>, scalar: T, which_store: String) -> TensorHandle<T> {
+        let data;
+        if which_store == "grad" {
+            data = CpuStorage::SV_add(input.grad.clone().unwrap(), scalar);
+        } else {
+            data = CpuStorage::SV_add(input.data.clone(), scalar);
+        }
+        let data = CpuStorage::SV_sub(input.data.clone(), scalar);
+        let grad_require = input.grad_require; // is the value is move or copy
+        TensorHandle(new_shared(Tensor {
+            shape: vec![input.shape[0], input.shape[1]],
+            data: Shared::new(RefCell::new(data)),
+            grad: if grad_require {
+                Some(Shared::new(RefCell::new(CpuStorage::ones(
+                    input.shape[0] * input.shape[1],
+                ))))
+            } else {
+                None
+            },
+            grad_require,
+            operation: Some(vec!["SV_sub".to_string()]),
+            is_child: true,
+            parent: Some(vec![input.0.clone()]),
+        }))
+    }
+    pub fn SV_mul(input: TensorHandle<T>, scalar: T, which_store: String) -> TensorHandle<T> {
+        let data;
+        if which_store == "grad" {
+            data = CpuStorage::SV_add(input.grad.clone().unwrap(), scalar);
+        } else {
+            data = CpuStorage::SV_add(input.data.clone(), scalar);
+        }
+        let grad_require = input.grad_require; // is the value is move or copy
+        TensorHandle(new_shared(Tensor {
+            shape: vec![input.shape[0], input.shape[1]],
+            data: Shared::new(RefCell::new(data)),
+            grad: if grad_require {
+                Some(Shared::new(RefCell::new(CpuStorage::ones(
+                    input.shape[0] * input.shape[1],
+                ))))
+            } else {
+                None
+            },
+            grad_require,
+            operation: Some(vec!["SV_mul".to_string()]),
+            is_child: true,
+            // right now this for eplison mul only,if want to make general you need to add scalar
+            // parent as well
+            parent: Some(vec![input.0.clone()]),
+        }))
+    }
+}
 
 impl<T: TensorFloat> Add for &TensorHandle<T> {
     type Output = TensorHandle<T>;
@@ -14,7 +108,7 @@ impl<T: TensorFloat> Add for &TensorHandle<T> {
         let grad_require = self.grad_require || rhs.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -37,7 +131,7 @@ impl<T: TensorFloat> Sub for &TensorHandle<T> {
         let grad_require = self.grad_require || rhs.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -46,7 +140,7 @@ impl<T: TensorFloat> Sub for &TensorHandle<T> {
                 None
             },
             grad_require,
-            operation: Some(vec!["add".to_string()]),
+            operation: Some(vec!["sub".to_string()]),
             is_child: true,
             parent: Some(vec![self.0.clone(), rhs.0.clone()]),
         }))
@@ -59,7 +153,7 @@ impl<T: TensorFloat> Mul for &TensorHandle<T> {
         let grad_require = self.grad_require || rhs.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -68,7 +162,7 @@ impl<T: TensorFloat> Mul for &TensorHandle<T> {
                 None
             },
             grad_require,
-            operation: Some(vec!["add".to_string()]),
+            operation: Some(vec!["mul".to_string()]),
             is_child: true,
             parent: Some(vec![self.0.clone(), rhs.0.clone()]),
         }))
@@ -81,7 +175,7 @@ impl<T: TensorFloat> Div for &TensorHandle<T> {
         let grad_require = self.grad_require || rhs.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -90,7 +184,7 @@ impl<T: TensorFloat> Div for &TensorHandle<T> {
                 None
             },
             grad_require,
-            operation: Some(vec!["add".to_string()]),
+            operation: Some(vec!["div".to_string()]),
             is_child: true,
             parent: Some(vec![self.0.clone(), rhs.0.clone()]),
         }))
@@ -118,10 +212,10 @@ impl<T: TensorFloat> TensorHandle<T> {
         let grad_require = a.grad_require || b.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: vec![a.shape[0], b.shape[1]],
-            data: Shared::new(data),
+            data: Shared::new(RefCell::new(data)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::ones(
-                    a.shape[0]*b.shape[1],
+                    a.shape[0] * b.shape[1],
                 ))))
             } else {
                 None
