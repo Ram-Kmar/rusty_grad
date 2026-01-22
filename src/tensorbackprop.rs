@@ -1,22 +1,12 @@
 // use crate::optimizer::sgd;
-use crate::cpu_backend;
+use crate::cpu_backend::CpuBackprop;
 use crate::shared::{Shared, new_shared};
-use crate::storage::CpuStorage;
+// use crate::storage::CpuStorage; // No longer needed for derivatives
 use crate::tensor::{Tensor, TensorHandle};
 use crate::traits::TensorFloat;
 use std::clone;
 use std::collections::HashSet;
-// pub fn add_backward<T: TensorFloat>(grad_output: &[T], _a: &Tensor<T>, _b: &Tensor<T>) -> (Vec<T>, Vec<T>) {
-//     // The gradient of add is 1, so we just pass the output gradient to both parents.
-//     (grad_output.to_vec(), grad_output.to_vec())
-// }
-//
-// pub fn mul_backward<T: TensorFloat>(grad_output:Shared<dyn Storage<Elem = T>>, A: Shared<Tensor<T>, B: Shared<Tensor<T>>) -> (Vec<T>, Vec<T>) {
-//     let a_shape = &a.shape;
-//     let b_shape = &b.shape;
-//     let grad_shape = &
-//
-// }
+
 impl<T: TensorFloat> TensorHandle<T> {
     pub fn backward(&self) {
         let sorted = self.build_topological_sort();
@@ -32,7 +22,7 @@ impl<T: TensorFloat> TensorHandle<T> {
                     .as_str()
                 {
                     "add" => {
-                        CpuStorage::derivate_add(
+                        CpuBackprop::derivate_add(
                             node.parent
                                 .as_ref()
                                 .expect("panic is happening in parent0 unwrap")[0]
@@ -46,7 +36,7 @@ impl<T: TensorFloat> TensorHandle<T> {
                                 .expect("panic is happening in updated_grad unwrap")
                                 .clone(),
                         );
-                        CpuStorage::derivate_add(
+                        CpuBackprop::derivate_add(
                             node.parent
                                 .as_ref()
                                 .expect("panic is happening in parent[1] unwrap")[1]
@@ -65,66 +55,67 @@ impl<T: TensorFloat> TensorHandle<T> {
                         let another_parent_data = node.parent.as_ref().unwrap()[1].clone();
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::matmul_derivate(another_parent_data, parent, child, true);
+                        CpuBackprop::matmul_derivate(another_parent_data, parent, child, true);
                         let another_parent_data = node.parent.as_ref().unwrap()[0].clone();
                         let parent = node.parent.as_ref().unwrap()[1].clone();
                         let child = node.0.clone();
-                        CpuStorage::matmul_derivate(another_parent_data, parent, child, false);
+                        CpuBackprop::matmul_derivate(another_parent_data, parent, child, false);
                     }
                     "neg" => {
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::neg_derivative(parent, child);
+                        CpuBackprop::neg_derivative(parent, child);
                     }
                     "relu" => {
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::relu_derivative(parent, child);
+                        CpuBackprop::relu_derivative(parent, child);
                     }
                     "square" => {
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::square_derivative(parent, child);
+                        CpuBackprop::square_derivative(parent, child);
                     }
                     "sqrt" => {
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::sqrt_derivative(parent, child);
+                        CpuBackprop::sqrt_derivative(parent, child);
                     }
                     "tanh" => {
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::tanh_derivative(parent, child);
+                        CpuBackprop::tanh_derivative(parent, child);
                     }
                     "exp" => {
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::exp_derivative(parent, child);
+                        CpuBackprop::exp_derivative(parent, child);
                     }
                     "sigmoid" => {
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::sigmodi_derivative(parent, child);
+                        CpuBackprop::sigmodi_derivative(parent, child);
                     }
                     "abs" => {
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::abs_derivative(parent, child);
+                        CpuBackprop::abs_derivative(parent, child);
                     }
                     "mean" => {
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::mean_derivative(parent, child);
+                        CpuBackprop::mean_derivative(parent, child);
                     }
                     "SV_mul" => {
+                        let another_parent_data = node.parent.as_ref().unwrap()[0].clone();
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::SV_mul_derivate(parent, child);
+                        CpuBackprop::SV_mul_derivate(another_parent_data, parent, child);
                     }
                     "SV_add" => {
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuStorage::SV_add_derivate(parent, child);
+                        CpuBackprop::SV_add_derivate(parent, child);
                     }
                     _ => {}
                 }

@@ -1,3 +1,5 @@
+use crate::backend::Backend;
+use crate::cpu_backend::CpuBackend;
 use crate::device::{self, Device};
 use crate::error::Result;
 use crate::storage::{CpuStorage, Storage};
@@ -8,11 +10,12 @@ use std::cell::RefCell;
 use std::fmt::{self, Debug};
 use std::ops::Deref;
 
-use crate::shared::{Shared, new_shared};
+use crate::shared::{new_shared, Shared};
 
 // --- Tensor Definition ---
 
 // NOTE: Tensor is now generic over the element type `T`, not the storage type `S`.
+#[derive(Clone)]
 pub struct Tensor<T: TensorFloat> {
     pub shape: Vec<usize>,
     // NOTE: The `data` field is now a trait object.
@@ -44,126 +47,90 @@ impl<T: TensorFloat> Deref for TensorHandle<T> {
 impl<T: TensorFloat> Tensor<T> {
     /// A constructor to create a new tensor on a specific device.
     pub fn new(shape: Vec<usize>, grad_require: bool, device: Device) -> TensorHandle<T> {
-        let size = shape.iter().product();
-
-        // TODO: This should be dispatched via a backend, but for now, we hardcode CPU
-        // to demonstrate the structure.
-        let data = match device {
-            Device::Cpu => Shared::new(RefCell::new(CpuStorage::new(size))),
-            Device::Cuda => Shared::new(RefCell::new(CpuStorage::new(size))),
+        // Dispatch to backend for data creation
+        let mut tensor = match device {
+            Device::Cpu => {
+                CpuBackend::random_uniform(&shape, device, -0.5, 0.5).expect("Failed to create tensor")
+            }
+            Device::Cuda => todo!("Cuda backend not yet fully integrated"),
         };
-        let grad = if grad_require {
-            let grad_storage: Shared<RefCell<dyn Storage<Elem = T>>> = match device {
-                Device::Cpu => Shared::new(RefCell::new(CpuStorage::zeros(size))),
-                Device::Cuda => Shared::new(RefCell::new(CpuStorage::zeros(size))),
+
+        tensor.grad_require = grad_require;
+
+        if grad_require {
+            let grad_tensor = match device {
+                Device::Cpu => CpuBackend::zeros(&shape, device).expect("Failed to create grad tensor"),
+                Device::Cuda => todo!("Cuda backend not yet fully integrated"),
             };
-            Some(grad_storage)
-        } else {
-            None
-        };
-        // return Err(crate::error::TensorError::ShapeMismatch);
-        // println!("this is the vector {:?}", data.get_data());
+            // Extract storage from the grad tensor
+            tensor.grad = Some(grad_tensor.data);
+        }
 
-        TensorHandle(new_shared(Self {
-            shape,
-            data,
-            grad,
-            grad_require,
-            operation: None,
-            is_child: false,
-            parent: None,
-        }))
+        TensorHandle(new_shared(tensor))
     }
 
     pub fn zeros(shape: Vec<usize>, grad_require: bool, device: Device) -> TensorHandle<T> {
-        let size = shape.iter().product();
-
-        let data = match device {
-            Device::Cpu => Shared::new(RefCell::new(CpuStorage::new(size))),
-            Device::Cuda => Shared::new(RefCell::new(CpuStorage::new(size))),
+        let mut tensor = match device {
+            Device::Cpu => CpuBackend::zeros(&shape, device).expect("Failed to create zeros tensor"),
+            Device::Cuda => todo!("Cuda backend not yet fully integrated"),
         };
-        let grad = if grad_require {
-            let grad_storage: Shared<RefCell<dyn Storage<Elem = T>>> = match device {
-                Device::Cpu => Shared::new(RefCell::new(CpuStorage::zeros(size))),
-                Device::Cuda => Shared::new(RefCell::new(CpuStorage::zeros(size))),
+
+        tensor.grad_require = grad_require;
+
+        if grad_require {
+            let grad_tensor = match device {
+                Device::Cpu => CpuBackend::zeros(&shape, device).expect("Failed to create grad tensor"),
+                Device::Cuda => todo!("Cuda backend not yet fully integrated"),
             };
-            Some(grad_storage)
-        } else {
-            None
-        };
+            tensor.grad = Some(grad_tensor.data);
+        }
 
-        TensorHandle(new_shared(Self {
-            shape,
-            data,
-            grad,
-            grad_require,
-            operation: None,
-            is_child: false,
-            parent: None,
-        }))
+        TensorHandle(new_shared(tensor))
     }
+
     pub fn ones(shape: Vec<usize>, grad_require: bool, device: Device) -> TensorHandle<T> {
-        let size = shape.iter().product();
-
-        let data = match device {
-            Device::Cpu => Shared::new(RefCell::new(CpuStorage::new(size))),
-            Device::Cuda => Shared::new(RefCell::new(CpuStorage::new(size))),
+        let mut tensor = match device {
+            Device::Cpu => CpuBackend::ones(&shape, device).expect("Failed to create ones tensor"),
+            Device::Cuda => todo!("Cuda backend not yet fully integrated"),
         };
-        let grad = if grad_require {
-            let grad_storage: Shared<RefCell<dyn Storage<Elem = T>>> = match device {
-                Device::Cpu => Shared::new(RefCell::new(CpuStorage::zeros(size))),
-                Device::Cuda => Shared::new(RefCell::new(CpuStorage::zeros(size))),
+
+        tensor.grad_require = grad_require;
+
+        if grad_require {
+            let grad_tensor = match device {
+                Device::Cpu => CpuBackend::zeros(&shape, device).expect("Failed to create grad tensor"),
+                Device::Cuda => todo!("Cuda backend not yet fully integrated"),
             };
-            // let grad = if grad_require {
-            //     let grad_storage: Shared<dyn Storage<Elem = T>> = match device {
-            //         Device::Cpu => Shared::new(CpuStorage::zeros(size)),
-            //         Device::Cuda => Shared::new(CpuStorage::zeros(size)),
-            //     };
-            Some(grad_storage)
-        } else {
-            None
-        };
+            tensor.grad = Some(grad_tensor.data);
+        }
 
-        TensorHandle(new_shared(Self {
-            shape,
-            data,
-            grad,
-            grad_require,
-            operation: None,
-            is_child: false,
-            parent: None,
-        }))
+        TensorHandle(new_shared(tensor))
     }
+
     pub fn from_data(
         data: Vec<T>,
         shape: Vec<usize>,
         grad_require: bool,
         device: Device,
     ) -> TensorHandle<T> {
-        let size = shape.iter().product();
-        let data = match device {
-            Device::Cpu => Shared::new(RefCell::new(CpuStorage::new(size))),
-            Device::Cuda => Shared::new(RefCell::new(CpuStorage::new(size))),
+        let mut tensor = match device {
+            Device::Cpu => {
+                CpuBackend::from_cpu_data(&data, &shape, device).expect("Failed to create tensor from data")
+            }
+            Device::Cuda => todo!("Cuda backend not yet fully integrated"),
         };
-        let grad = if grad_require {
-            let grad_storage: Shared<RefCell<dyn Storage<Elem = T>>> = match device {
-                Device::Cpu => Shared::new(RefCell::new(CpuStorage::zeros(size))),
-                Device::Cuda => Shared::new(RefCell::new(CpuStorage::zeros(size))),
+
+        tensor.grad_require = grad_require;
+
+        if grad_require {
+            let grad_tensor = match device {
+                Device::Cpu => CpuBackend::zeros(&shape, device).expect("Failed to create grad tensor"),
+                Device::Cuda => todo!("Cuda backend not yet fully integrated"),
             };
-            Some(grad_storage)
-        } else {
-            None
-        };
-        // println!("this is the vector {:?}", data.get_data());
-        TensorHandle(new_shared(Self {
-            shape,
-            data,
-            grad_require,
-            grad,
-            operation: None,
-            is_child: false,
-            parent: None,
-        }))
+            tensor.grad = Some(grad_tensor.data);
+        }
+
+        TensorHandle(new_shared(tensor))
     }
 }
 // --- Debug and Display impls ---

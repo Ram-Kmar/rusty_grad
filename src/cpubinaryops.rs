@@ -1,12 +1,12 @@
-use crate::device::Device;
-use crate::error::{Result, TensorError};
+// use crate::device::Device;
+// use crate::error::{Result, TensorError};
 use crate::gemm::Gemm;
-use crate::shared::{Shared, new_shared};
-use crate::storage::{CpuStorage, Storage};
-use crate::tensor::{Tensor, TensorHandle};
+// use crate::shared::{Shared, new_shared};
+// use crate::storage::{CpuStorage, Storage};
+// use crate::tensor::{Tensor, TensorHandle};
 use crate::traits::TensorFloat;
-use std::cell::RefCell;
-use std::ops::{Add, Div, Mul, Sub};
+// use std::cell::RefCell;
+// use std::ops::{Add, Div, Mul, Sub};
 
 pub fn add<T: TensorFloat>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
     let data = a.iter().zip(b.iter()).map(|(&x, &y)| x + y).collect();
@@ -127,15 +127,17 @@ pub fn div_derivate<T: TensorFloat>(parent_grad: &Vec<T>, grad_update: &Vec<T>) 
         .collect();
     data
 }
-pub fn SV_mul_derivate<T: TensorFloat>(parent_grad: &Vec<T>: &Vec<T>, grad_update: &Vec<T>) -> Vec<T> {
-    let size = input.len();
-    let mut data = vec![T::from(scalar).unwrap(); size];
+pub fn SV_mul_derivate<T: TensorFloat>(_parent_grad: &Vec<T>, _grad_update: &Vec<T>) -> Vec<T> {
+    // TODO: Fix this. Requires scalar value to be known.
+    // let size = input.len();
+    // let mut data = vec![T::from(scalar).unwrap(); size];
     // let mut k = 0;
     // for i in input.iter() {
     //     data[k] = *i * scalar;
     //     k = k + 1;
     // }
-    data
+    // data
+    panic!("SV_mul_derivate not implemented");
 }
 
 pub fn matmul_derivate<T: TensorFloat>(

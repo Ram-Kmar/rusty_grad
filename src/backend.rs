@@ -18,6 +18,12 @@ pub trait Backend<T: TensorFloat> {
     fn zeros(shape: &[usize], device: Device) -> Result<Tensor<T>>;
     fn ones(shape: &[usize], device: Device) -> Result<Tensor<T>>;
     fn from_cpu_data(data: &[T], shape: &[usize], device: Device) -> Result<Tensor<T>>;
+    fn random_uniform(
+        shape: &[usize],
+        device: Device,
+        min: f64,
+        max: f64,
+    ) -> Result<Tensor<T>>;
 
     // --- Binary Operations --- //
 

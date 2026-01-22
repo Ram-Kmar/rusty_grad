@@ -1,5 +1,9 @@
-use crate::cpu_backend;
-use crate::shared::{Shared, new_shared};
+// use crate::cpu_backend;
+use crate::backend::Backend;
+use crate::cpu_backend::CpuBackend;
+use crate::cpuurnaryops;
+use crate::error::TensorError;
+use crate::shared::{new_shared, Shared};
 use crate::storage::{CpuStorage, Storage};
 use crate::tensor::{Tensor, TensorHandle};
 use crate::traits::TensorFloat;
@@ -23,31 +27,25 @@ pub trait TensorUrnaryOps<T: TensorFloat> {
 
 impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
     fn relu(&self) -> TensorHandle<T> {
-        let data = CpuStorage::relu(self.data.clone());
-        let grad_require = self.grad_require;
-        TensorHandle(new_shared(Tensor {
-            shape: self.shape.clone(),
-            data: Shared::new(RefCell::new(data)),
-            grad: if grad_require {
-                Some(Shared::new(RefCell::new(CpuStorage::zeros(
-                    self.shape.iter().product(),
-                ))))
-            } else {
-                None
-            },
-            grad_require,
-            operation: Some(vec!["relu".to_string()]),
-            is_child: true,
-            parent: Some(vec![self.0.clone()]),
-        }))
+        let tensor = CpuBackend::relu(&self.0).expect("Relu failed");
+        TensorHandle(new_shared(tensor))
     }
 
     fn sigmoid(&self) -> TensorHandle<T> {
-        let data = CpuStorage::sigmoid(self.data.clone());
+        let storage = self
+            .data
+            .borrow()
+            .as_any()
+            .downcast_ref::<CpuStorage<T>>()
+            .expect("Backend mismatch")
+            .clone();
+        let data = cpuurnaryops::sigmoid(storage.get_data());
+        let new_storage = CpuStorage::from_data(data);
+
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(RefCell::new(data)),
+            data: Shared::new(RefCell::new(new_storage)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -63,11 +61,20 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
     }
 
     fn tanh(&self) -> TensorHandle<T> {
-        let data = CpuStorage::tanh(self.data.clone());
+        let storage = self
+            .data
+            .borrow()
+            .as_any()
+            .downcast_ref::<CpuStorage<T>>()
+            .expect("Backend mismatch")
+            .clone();
+        let data = cpuurnaryops::tanh(storage.get_data());
+        let new_storage = CpuStorage::from_data(data);
+
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(RefCell::new(data)),
+            data: Shared::new(RefCell::new(new_storage)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -83,70 +90,57 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
     }
 
     fn exp(&self) -> TensorHandle<T> {
-        let data = CpuStorage::exp(self.data.clone());
-        let grad_require = self.grad_require;
-        TensorHandle(new_shared(Tensor {
-            shape: self.shape.clone(),
-            data: Shared::new(RefCell::new(data)),
-            grad: if grad_require {
-                Some(Shared::new(RefCell::new(CpuStorage::zeros(
-                    self.shape.iter().product(),
-                ))))
-            } else {
-                None
-            },
-            grad_require,
-            operation: Some(vec!["exp".to_string()]),
-            is_child: true,
-            parent: Some(vec![self.0.clone()]),
-        }))
+        let tensor = CpuBackend::exp(&self.0).expect("Exp failed");
+        TensorHandle(new_shared(tensor))
     }
+
     fn sum(&self) -> TensorHandle<T> {
-        let data = CpuStorage::sum(self.data.clone());
+        let storage = self
+            .data
+            .borrow()
+            .as_any()
+            .downcast_ref::<CpuStorage<T>>()
+            .expect("Backend mismatch")
+            .clone();
+        let data = cpuurnaryops::sum(storage.get_data());
+        let new_storage = CpuStorage::from_data(data);
+
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
-            shape: self.shape.clone(),
-            data: Shared::new(RefCell::new(data)),
+            shape: vec![1], // Sum reduces to a scalar (vector of length 1)
+            data: Shared::new(RefCell::new(new_storage)),
             grad: if grad_require {
-                Some(Shared::new(RefCell::new(CpuStorage::zeros(
-                    self.shape.iter().product(),
-                ))))
+                Some(Shared::new(RefCell::new(CpuStorage::zeros(1))))
             } else {
                 None
             },
             grad_require,
-            operation: Some(vec!["log".to_string()]),
+            operation: Some(vec!["sum".to_string()]), // Fixed operation name
             is_child: true,
             parent: Some(vec![self.0.clone()]),
         }))
     }
 
     fn log(&self) -> TensorHandle<T> {
-        let data = CpuStorage::log(self.data.clone());
-        let grad_require = self.grad_require;
-        TensorHandle(new_shared(Tensor {
-            shape: self.shape.clone(),
-            data: Shared::new(RefCell::new(data)),
-            grad: if grad_require {
-                Some(Shared::new(RefCell::new(CpuStorage::zeros(
-                    self.shape.iter().product(),
-                ))))
-            } else {
-                None
-            },
-            grad_require,
-            operation: Some(vec!["log".to_string()]),
-            is_child: true,
-            parent: Some(vec![self.0.clone()]),
-        }))
+        let tensor = CpuBackend::log(&self.0).expect("Log failed");
+        TensorHandle(new_shared(tensor))
     }
 
     fn neg(&self) -> TensorHandle<T> {
-        let data = CpuStorage::neg(self.data.clone());
+        let storage = self
+            .data
+            .borrow()
+            .as_any()
+            .downcast_ref::<CpuStorage<T>>()
+            .expect("Backend mismatch")
+            .clone();
+        let data = cpuurnaryops::neg(storage.get_data());
+        let new_storage = CpuStorage::from_data(data);
+
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(RefCell::new(data)),
+            data: Shared::new(RefCell::new(new_storage)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -162,11 +156,20 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
     }
 
     fn abs(&self) -> TensorHandle<T> {
-        let data = CpuStorage::abs(self.data.clone());
+        let storage = self
+            .data
+            .borrow()
+            .as_any()
+            .downcast_ref::<CpuStorage<T>>()
+            .expect("Backend mismatch")
+            .clone();
+        let data = cpuurnaryops::abs(storage.get_data());
+        let new_storage = CpuStorage::from_data(data);
+
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(RefCell::new(data)),
+            data: Shared::new(RefCell::new(new_storage)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -182,11 +185,20 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
     }
 
     fn square(&self) -> TensorHandle<T> {
-        let data = CpuStorage::square(self.data.clone());
+        let storage = self
+            .data
+            .borrow()
+            .as_any()
+            .downcast_ref::<CpuStorage<T>>()
+            .expect("Backend mismatch")
+            .clone();
+        let data = cpuurnaryops::square(storage.get_data());
+        let new_storage = CpuStorage::from_data(data);
+
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(RefCell::new(data)),
+            data: Shared::new(RefCell::new(new_storage)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -202,11 +214,20 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
     }
 
     fn sqrt(&self) -> TensorHandle<T> {
-        let data = CpuStorage::sqrt(self.data.clone());
+        let storage = self
+            .data
+            .borrow()
+            .as_any()
+            .downcast_ref::<CpuStorage<T>>()
+            .expect("Backend mismatch")
+            .clone();
+        let data = cpuurnaryops::sqrt(storage.get_data());
+        let new_storage = CpuStorage::from_data(data);
+
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(RefCell::new(data)),
+            data: Shared::new(RefCell::new(new_storage)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
@@ -220,31 +241,22 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             parent: Some(vec![self.0.clone()]),
         }))
     }
-    // fn sum(&self, access_dim: usize) -> TensorHandle<T> {
-    //     let access_dim = self.shape[access_dim];
-    //     let data = CpuStorage::(self.data.clone(), self.shape.clone(), access_dim);
-    //     let grad_require = self.grad_require;
-    //     TensorHandle(new_shared(Tensor {
-    //         shape: vec![1],
-    //         data: Shared::new(RefCell::new(data)),
-    //         grad: if grad_require {
-    //             Some(Shared::new(RefCell::new(CpuStorage::zeros(1))))
-    //         } else {
-    //             None
-    //         },
-    //         grad_require,
-    //         operation: Some(vec!["mean".to_string()]),
-    //         is_child: true,
-    //         parent: Some(vec![self.0.clone()]),
-    //     }))
-    // }
 
     fn mean(&self) -> TensorHandle<T> {
-        let data = CpuStorage::mean(self.data.clone());
+        let storage = self
+            .data
+            .borrow()
+            .as_any()
+            .downcast_ref::<CpuStorage<T>>()
+            .expect("Backend mismatch")
+            .clone();
+        let data = cpuurnaryops::mean(storage.get_data());
+        let new_storage = CpuStorage::from_data(data);
+
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
-            shape: vec![1],
-            data: Shared::new(RefCell::new(data)),
+            shape: vec![1], // Mean reduces to scalar
+            data: Shared::new(RefCell::new(new_storage)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(1))))
             } else {
@@ -256,12 +268,22 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             parent: Some(vec![self.0.clone()]),
         }))
     }
+
     fn power(&self, power: T) -> TensorHandle<T> {
-        let data = CpuStorage::power(self.data.clone(), power);
+        let storage = self
+            .data
+            .borrow()
+            .as_any()
+            .downcast_ref::<CpuStorage<T>>()
+            .expect("Backend mismatch")
+            .clone();
+        let data = cpuurnaryops::power(storage.get_data(), power);
+        let new_storage = CpuStorage::from_data(data);
+
         let grad_require = self.grad_require;
         TensorHandle(new_shared(Tensor {
             shape: self.shape.clone(),
-            data: Shared::new(RefCell::new(data)),
+            data: Shared::new(RefCell::new(new_storage)),
             grad: if grad_require {
                 Some(Shared::new(RefCell::new(CpuStorage::zeros(
                     self.shape.iter().product(),
