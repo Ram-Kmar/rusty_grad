@@ -1,9 +1,9 @@
-// use crate::optimizer::sgd;
-use crate::cpu_backend::CpuBackprop;
-use crate::shared::{Shared, new_shared};
-// use crate::storage::CpuStorage; // No longer needed for derivatives
+// use crate::nn::optimizer::sgd;
+use crate::backends::cpu::CpuBackprop;
+use crate::core::shared::{Shared, new_shared};
+// use crate::core::storage::CpuStorage; // No longer needed for derivatives
 use crate::tensor::{Tensor, TensorHandle};
-use crate::traits::TensorFloat;
+use crate::core::traits::TensorFloat;
 use std::clone;
 use std::collections::HashSet;
 

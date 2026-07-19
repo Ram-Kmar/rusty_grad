@@ -1,7 +1,7 @@
-use crate::device::Device;
-use crate::error::{Result, TensorError};
-use crate::initializers::*;
-use crate::traits::TensorFloat;
+use crate::core::device::Device;
+use crate::core::error::{Result, TensorError};
+use crate::nn::initializers::*;
+use crate::core::traits::TensorFloat;
 use std::any::Any;
 
 /// A trait representing a buffer of data on a specific device.

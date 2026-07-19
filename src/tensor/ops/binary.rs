@@ -1,13 +1,13 @@
-// use crate::cpu_backend;
-use crate::backend::Backend;
-use crate::cpu_backend::CpuBackend;
-use crate::cpubinaryops;
-use crate::device::Device;
-use crate::error::TensorError;
-use crate::shared::{new_shared, Shared};
-use crate::storage::{CpuStorage, Storage};
+// use crate::backends::cpu;
+use crate::backends::Backend;
+use crate::backends::cpu::CpuBackend;
+use crate::backends::cpu::binary_ops;
+use crate::core::device::Device;
+use crate::core::error::TensorError;
+use crate::core::shared::{new_shared, Shared};
+use crate::core::storage::{CpuStorage, Storage};
 use crate::tensor::{Tensor, TensorHandle};
-use crate::traits::TensorFloat;
+use crate::core::traits::TensorFloat;
 use std::cell::RefCell;
 use std::ops::{Add, Div, Mul, Sub};
 use std::sync::Arc;
@@ -36,7 +36,7 @@ impl<T: TensorFloat> TensorHandle<T> {
                 .clone()
         };
 
-        let data = cpubinaryops::SV_add(storage.get_data(), scalar);
+        let data = crate::backends::cpu::binary_ops::SV_add(storage.get_data(), scalar);
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = input.grad_require;
@@ -80,7 +80,7 @@ impl<T: TensorFloat> TensorHandle<T> {
                 .clone()
         };
 
-        let data = cpubinaryops::SV_sub(storage.get_data(), scalar);
+        let data = crate::backends::cpu::binary_ops::SV_sub(storage.get_data(), scalar);
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = input.grad_require;
@@ -124,7 +124,7 @@ impl<T: TensorFloat> TensorHandle<T> {
                 .clone()
         };
 
-        let data = cpubinaryops::SV_mul(storage.get_data(), scalar);
+        let data = crate::backends::cpu::binary_ops::SV_mul(storage.get_data(), scalar);
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = input.grad_require;

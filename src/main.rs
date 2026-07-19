@@ -1,34 +1,15 @@
-mod backend;
-mod cpu_backend;
-mod cpubinaryops;
-// mod cuda_bindings;
-mod cpuurnaryops;
-mod device;
-mod error;
-mod gemm;
-// mod hrm;
-mod initializers;
-mod tensorbackprop;
-mod tensorurnaryops;
-// mod linear;
-mod optimizer;
-mod shared;
-mod storage;
-mod tensor;
-mod tensorbinaryops;
-mod traits;
+pub mod backends;
+pub mod core;
+pub mod math;
+pub mod nn;
+pub mod tensor;
+pub mod utils;
 
-use crate::device::Device;
-// use crate::cpuurnaryops::sigmoid;
-use crate::error::Result;
-use crate::optimizer::SGD;
+use crate::core::device::Device;
+use crate::nn::optimizer::SGD;
 use crate::tensor::{Tensor, TensorHandle};
-// use crate::storage::{CpuStorage, Storage};
-// use crate::tensorbinaryops::TensorBinaryOps;
-use crate::tensorurnaryops::TensorUrnaryOps;
-use crate::traits::TensorFloat;
-// use std::any::type_name;
-use std::time::Instant;
+use crate::tensor::ops::unary::TensorUrnaryOps;
+use crate::core::traits::TensorFloat;
 
 pub fn give_t<T: TensorFloat>(input: f64) -> T {
     T::from(input).unwrap()

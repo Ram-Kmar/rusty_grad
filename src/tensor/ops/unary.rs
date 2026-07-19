@@ -1,12 +1,12 @@
-// use crate::cpu_backend;
-use crate::backend::Backend;
-use crate::cpu_backend::CpuBackend;
-use crate::cpuurnaryops;
-use crate::error::TensorError;
-use crate::shared::{new_shared, Shared};
-use crate::storage::{CpuStorage, Storage};
+// use crate::backends::cpu;
+use crate::backends::Backend;
+use crate::backends::cpu::CpuBackend;
+use crate::backends::cpu::unary_ops;
+use crate::core::error::TensorError;
+use crate::core::shared::{new_shared, Shared};
+use crate::core::storage::{CpuStorage, Storage};
 use crate::tensor::{Tensor, TensorHandle};
-use crate::traits::TensorFloat;
+use crate::core::traits::TensorFloat;
 use std::cell::RefCell;
 
 pub trait TensorUrnaryOps<T: TensorFloat> {
@@ -39,7 +39,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             .downcast_ref::<CpuStorage<T>>()
             .expect("Backend mismatch")
             .clone();
-        let data = cpuurnaryops::sigmoid(storage.get_data());
+        let data = crate::backends::cpu::unary_ops::sigmoid(storage.get_data());
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = self.grad_require;
@@ -68,7 +68,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             .downcast_ref::<CpuStorage<T>>()
             .expect("Backend mismatch")
             .clone();
-        let data = cpuurnaryops::tanh(storage.get_data());
+        let data = crate::backends::cpu::unary_ops::tanh(storage.get_data());
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = self.grad_require;
@@ -102,7 +102,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             .downcast_ref::<CpuStorage<T>>()
             .expect("Backend mismatch")
             .clone();
-        let data = cpuurnaryops::sum(storage.get_data());
+        let data = crate::backends::cpu::unary_ops::sum(storage.get_data());
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = self.grad_require;
@@ -134,7 +134,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             .downcast_ref::<CpuStorage<T>>()
             .expect("Backend mismatch")
             .clone();
-        let data = cpuurnaryops::neg(storage.get_data());
+        let data = crate::backends::cpu::unary_ops::neg(storage.get_data());
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = self.grad_require;
@@ -163,7 +163,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             .downcast_ref::<CpuStorage<T>>()
             .expect("Backend mismatch")
             .clone();
-        let data = cpuurnaryops::abs(storage.get_data());
+        let data = crate::backends::cpu::unary_ops::abs(storage.get_data());
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = self.grad_require;
@@ -192,7 +192,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             .downcast_ref::<CpuStorage<T>>()
             .expect("Backend mismatch")
             .clone();
-        let data = cpuurnaryops::square(storage.get_data());
+        let data = crate::backends::cpu::unary_ops::square(storage.get_data());
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = self.grad_require;
@@ -221,7 +221,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             .downcast_ref::<CpuStorage<T>>()
             .expect("Backend mismatch")
             .clone();
-        let data = cpuurnaryops::sqrt(storage.get_data());
+        let data = crate::backends::cpu::unary_ops::sqrt(storage.get_data());
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = self.grad_require;
@@ -250,7 +250,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             .downcast_ref::<CpuStorage<T>>()
             .expect("Backend mismatch")
             .clone();
-        let data = cpuurnaryops::mean(storage.get_data());
+        let data = crate::backends::cpu::unary_ops::mean(storage.get_data());
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = self.grad_require;
@@ -277,7 +277,7 @@ impl<T: TensorFloat> TensorUrnaryOps<T> for TensorHandle<T> {
             .downcast_ref::<CpuStorage<T>>()
             .expect("Backend mismatch")
             .clone();
-        let data = cpuurnaryops::power(storage.get_data(), power);
+        let data = crate::backends::cpu::unary_ops::power(storage.get_data(), power);
         let new_storage = CpuStorage::from_data(data);
 
         let grad_require = self.grad_require;

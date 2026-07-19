@@ -1,4 +1,4 @@
-use crate::gemm::Gemm;
+use crate::math::gemm::Gemm;
 use num_traits::Float;
 use rand::distributions::uniform::SampleUniform;
 use std::fmt::Debug;

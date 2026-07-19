@@ -1,6 +1,6 @@
 use crate::tensor::TensorHandle;
 use std::fmt::Debug;
-use crate::traits::TensorFloat;
+use crate::core::traits::TensorFloat;
 
 pub trait Module<T: TensorFloat>: Debug {
     fn forward(&self, input: TensorHandle<T>) -> TensorHandle<T>;

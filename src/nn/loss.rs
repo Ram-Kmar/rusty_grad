@@ -1,5 +1,5 @@
 use crate::tensor::TensorHandle;
-use crate::traits::TensorFloat;
+use crate::core::traits::TensorFloat;
 
 pub trait Loss<T: TensorFloat> {
     fn forward(&self, prediction: &TensorHandle<T>, target: &TensorHandle<T>) -> TensorHandle<T>;

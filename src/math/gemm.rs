@@ -1,4 +1,4 @@
-// use crate::traits::TensorFloat;
+// use crate::core::traits::TensorFloat;
 // use num_traits::Float;
 pub trait Gemm {
     unsafe fn gemm(

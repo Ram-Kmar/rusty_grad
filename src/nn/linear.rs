@@ -1,8 +1,8 @@
-// use crate::module::Module;
-use crate::device::Device;
-use crate::shared::new_shared;
+// use crate::nn::module::Module;
+use crate::core::device::Device;
+use crate::core::shared::new_shared;
 use crate::tensor::{Tensor, TensorHandle};
-use crate::traits::TensorFloat;
+use crate::core::traits::TensorFloat;
 
 /// Represents a linear transformation layer.
 #[derive(Debug)]

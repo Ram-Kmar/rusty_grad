@@ -16,18 +16,17 @@
 
 ## Project Structure
 
-The project is organized into several modules:
+The project is organized into several distinct modules:
 
-| File                  | Description                                                                                              |
-| --------------------- | -------------------------------------------------------------------------------------------------------- |
-| `src/tensor.rs`       | Defines the core `Tensor` and `TensorHandle` structures.                                                 |
-| `src/tensorbackprop.rs`| Core autograd logic, including topological sort and the `backward()` pass.                               |
-| `src/backend.rs`      | The `Backend` trait abstraction.                                                                         |
-| `src/cpu_backend.rs`  | Implementation of CPU operations and their derivatives.                                                  |
-| `src/cuda_backend.rs` | Skeleton for CUDA operations.                                                                            |
-| `src/storage.rs`      | `Storage` trait for abstraction over memory (CPU vs GPU).                                                |
-| `src/optimizer.rs`    | `SGD` optimizer implementation.                                                                          |
-| `src/main.rs`         | Demonstrates a working training loop with a basic multi-layer perceptron architecture.                   |
+| Module              | Description                                                                                              |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| `src/tensor/`       | Defines the core `Tensor` structures, operations (`unary`, `binary`, `movement`), and backpropagation.   |
+| `src/backends/`     | Contains hardware-specific computation implementations (e.g., `cpu`, `cuda`).                            |
+| `src/nn/`           | High-level neural network components including models, layers, optimizers (e.g., SGD), and initializers. |
+| `src/core/`         | Foundational types and traits (e.g., `Device`, `Storage`, `TensorError`).                                |
+| `src/math/`         | Core mathematical utilities like high-performance GEMM operations.                                       |
+| `src/utils/`        | General helper functions and utilities.                                                                  |
+| `src/main.rs`       | Demonstrates a working training loop with a basic multi-layer perceptron architecture.                   |
 
 ## Current Status & Future Work
 

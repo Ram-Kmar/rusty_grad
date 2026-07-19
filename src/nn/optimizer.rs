@@ -1,7 +1,7 @@
-use crate::cpu_backend;
-// use crate::storage::{CpuStorage, Storage};
-use crate::{tensor::TensorHandle, traits::TensorFloat};
-use crate::cpubinaryops;
+use crate::backends::cpu;
+// use crate::core::storage::{CpuStorage, Storage};
+use crate::{tensor::TensorHandle, core::traits::TensorFloat};
+use crate::backends::cpu::binary_ops;
 
 pub struct SGD<T: TensorFloat> {
     pub learning_rate: T,
@@ -23,7 +23,7 @@ impl<T: TensorFloat> SGD<T> {
             let lr = self.learning_rate;
             let data = TensorHandle::SV_mul(node.clone(), lr, "grad".to_string());
             let data =
-                cpubinaryops::sub(node.data.borrow().get_data(), data.data.borrow().get_data());
+                crate::backends::cpu::binary_ops::sub(node.data.borrow().get_data(), data.data.borrow().get_data());
             // println!("this is data{:?}", data);
             node.data.borrow_mut().update_data(data);
         }

@@ -1,6 +1,6 @@
 use crate::tensor::TensorHandle;
-use crate::module::Module;
-use crate::traits::TensorFloat;
+use crate::nn::module::Module;
+use crate::core::traits::TensorFloat;
 
 #[derive(Debug)]
 pub struct Embedding<T: TensorFloat>{

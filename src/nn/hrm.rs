@@ -1,5 +1,5 @@
 use crate::tensor::{Tensor, TensorHandle};
-use crate::traits::TensorFloat;
+use crate::core::traits::TensorFloat;
 
 pub struct HRM_Innercarry<T: TensorFloat> {
     pub z_H: TensorHandle<T>,
@@ -7,51 +7,48 @@ pub struct HRM_Innercarry<T: TensorFloat> {
 }
 
 pub struct HRM_carry<T: TensorFloat> {
-    pub inner_carry: HRM_Innercarry,
+    pub inner_carry: HRM_Innercarry<T>,
     pub steps: TensorHandle<T>,
     pub halted: TensorHandle<T>,
     pub current_data: TensorHandle<T>,
 }
 
 pub struct HRM_config {
-    pub batch_size:i32 ,
+    pub batch_size: i32,
     pub seq_len: i32,
     pub puzzle_emb_ndim: i32,
-    pub num_puzzle_identifiers:i32,
+    pub num_puzzle_identifiers: i32,
     pub vocab_size: i32,
 
-    H_cycles:i32,
-    L_cycles:i32,
+    pub H_cycles: i32,
+    pub L_cycles: i32,
 
-    H_layers: i32,
-    L_layers: i32,
+    pub H_layers: i32,
+    pub L_layers: i32,
 
    //Transformer_config
-    hidden_size: i32,
-    expansion: f32,
-    num_heads: i32,
-    pos_encodings:String,
+    pub hidden_size: i32,
+    pub expansion: f32,
+    pub num_heads: i32,
+    pub pos_encodings: String,
 
-    rms_norm_eps: f32 = 1e-5,
-    rope_theta: f32 = 10000.0,
+    pub rms_norm_eps: f32,
+    pub rope_theta: f32,
 
-    halt_max_steps : i32,
-    halt_exploration_prob: f32,
+    pub halt_max_steps: i32,
+    pub halt_exploration_prob: f32,
 
-    forward_dtype: String = "bfloat16",
-
+    pub forward_dtype: String,
 }
 
-pub struct HRM_Block {
+pub struct HRM_Block<T: TensorFloat> {
     pub self_attn: TensorHandle<T>, // Attention
     pub mlp: TensorHandle<T>,       //mlp
     pub norm_eps: f32,
 }
 
-impl HRM_Block {
+impl<T: TensorFloat> HRM_Block<T> {
     pub fn forward(&self) -> TensorHandle<T> {
-        let hidden_states = rms_norm();
-        let hidden_states = rms_norm();
-        hidden_states
+        todo!()
     }
 }

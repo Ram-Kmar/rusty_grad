@@ -1,8 +1,9 @@
-use crate::linear::Linear;
-use crate::module::Module;
-use crate::embedding::Embedding;
+use crate::nn::linear::Linear;
+use crate::nn::module::Module;
+use std::marker::PhantomData;
+use crate::nn::embedding::Embedding;
 use std::rc::Rc;
-use crate::traits::TensorFloat;
+use crate::core::traits::TensorFloat;
 use crate::tensor::TensorHandle;
 
 // Define the mode enum with no associated data
@@ -20,6 +21,7 @@ impl Default for GradMode {
 }
 
 pub struct Model<T: TensorFloat + 'static> {
+    _marker: PhantomData<T>,
     // pub graph: Vec<String>,
     // pub layers: Vec<Rc<dyn Module<T>>>,
     pub grad_mode: GradMode, // ✅ fixed

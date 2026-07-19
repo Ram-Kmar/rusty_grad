@@ -1,8 +1,11 @@
-use crate::device::Device;
-use crate::error::Result;
-use crate::storage::Storage;
+pub mod cpu;
+// pub mod cuda;
+
+use crate::core::device::Device;
+use crate::core::error::Result;
+use crate::core::storage::Storage;
 use crate::tensor::Tensor;
-use crate::traits::TensorFloat;
+use crate::core::traits::TensorFloat;
 
 //~~~~~~~~~ TRAIT DEFINITION (MODIFIED) ~~~~~~~~~//
 

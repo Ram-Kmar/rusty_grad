@@ -1,16 +1,19 @@
-use crate::backend::Backend;
-use crate::cpu_backend::CpuBackend;
-use crate::device::{self, Device};
-use crate::error::Result;
-use crate::storage::{CpuStorage, Storage};
-// use crate::tensorbackprop::mul_backward;
-use crate::traits::TensorFloat;
+pub mod backprop;
+pub mod ops;
+
+use crate::backends::Backend;
+use crate::backends::cpu::CpuBackend;
+use crate::core::device::{self, Device};
+use crate::core::error::Result;
+use crate::core::storage::{CpuStorage, Storage};
+// use crate::tensor::backprop::mul_backward;
+use crate::core::traits::TensorFloat;
 use std::cell::RefCell;
 // use std::collections::HashSet;
 use std::fmt::{self, Debug};
 use std::ops::Deref;
 
-use crate::shared::{new_shared, Shared};
+use crate::core::shared::{new_shared, Shared};
 
 // --- Tensor Definition ---
 
@@ -175,4 +178,3 @@ impl<T: TensorFloat> TensorHandle<T> {
         Tensor::new(shape, grad_require, device)
     }
 }
-

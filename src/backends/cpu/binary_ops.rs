@@ -1,10 +1,10 @@
-// use crate::device::Device;
-// use crate::error::{Result, TensorError};
-use crate::gemm::Gemm;
-// use crate::shared::{Shared, new_shared};
-// use crate::storage::{CpuStorage, Storage};
+// use crate::core::device::Device;
+// use crate::core::error::{Result, TensorError};
+use crate::math::gemm::Gemm;
+// use crate::core::shared::{Shared, new_shared};
+// use crate::core::storage::{CpuStorage, Storage};
 // use crate::tensor::{Tensor, TensorHandle};
-use crate::traits::TensorFloat;
+use crate::core::traits::TensorFloat;
 // use std::cell::RefCell;
 // use std::ops::{Add, Div, Mul, Sub};
 
