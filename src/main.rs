@@ -1,43 +1,44 @@
-pub mod backends;
-pub mod core;
-pub mod math;
-pub mod nn;
-pub mod tensor;
-pub mod utils;
-
-use crate::core::device::Device;
-use crate::nn::optimizer::SGD;
-use crate::tensor::{Tensor, TensorHandle};
-use crate::tensor::ops::unary::TensorUrnaryOps;
-use crate::core::traits::TensorFloat;
+use rusty_grad::core::device::Device;
+use rusty_grad::nn::optimizer::SGD;
+use rusty_grad::tensor::{Tensor, TensorHandle};
+use rusty_grad::tensor::ops::unary::TensorUrnaryOps;
+use rusty_grad::core::traits::TensorFloat;
 
 pub fn give_t<T: TensorFloat>(input: f64) -> T {
     T::from(input).unwrap()
 }
 
 fn main() {
-    let x = Tensor::<f32>::new(vec![1, 4], true, Device::Cpu);
-    let y = Tensor::<f32>::new(vec![1, 1], true, Device::Cpu);
+    let x = Tensor::<f32>::new(vec![2, 2], true, Device::Cpu);
+    let y = Tensor::<f32>::new(vec![2, 2], true, Device::Cpu);
     let w1 = Tensor::<f32>::new(vec![4, 4], true, Device::Cpu);
     let w2 = Tensor::<f32>::new(vec![4, 20], true, Device::Cpu);
     let w3 = Tensor::<f32>::new(vec![20, 4], true, Device::Cpu);
     let sgd = SGD {
         learning_rate: 0.01,
     };
-    for i in 0..10 {
-        let ir = TensorHandle::matmul(x.0.clone(), w1.0.clone());
-        ir.sigmoid();
-        let ir2 = TensorHandle::matmul(ir.0.clone(), w2.0.clone());
-        ir2.sigmoid();
-        let result = TensorHandle::matmul(ir2.0.clone(), w3.0.clone());
-        let epsilon = give_t(0.000000001);
-        let ir1 = TensorHandle::SV_add(result.clone(), epsilon,"cpu".to_string());
-        let irlog = ir1.log();
-        let irmul = TensorHandle::matmul(result.0.clone(), irlog.0.clone());
-        let irloss = irmul.sum();
-        let loss = irloss.neg();
-        loss.backward();
-        sgd.update(&loss);
-        // loss = -np.sum(y_true * np.log(y_pred + epsilon))
-    }
+    println!("This is the x {}", x);
+    println!("This is the y {}", y);
+
+    let ans = TensorHandle::matmul(x.0.clone(), y.0.clone());
+    println!("This is the ans {}", ans);
+
+
+    // for i in 0..10 {
+    //     let ir = TensorHandle::matmul(x.0.clone(), w1.0.clone());
+    //     ir.sigmoid();
+    //     println!("This is ir{}", ir);
+    //     let ir2 = TensorHandle::matmul(ir.0.clone(), w2.0.clone());
+    //     ir2.sigmoid();
+    //     let result = TensorHandle::matmul(ir2.0.clone(), w3.0.clone());
+    //     let epsilon = give_t(0.000000001);
+    //     let ir1 = TensorHandle::SV_add(result.clone(), epsilon,"cpu".to_string());
+    //     let irlog = ir1.log();
+    //     let irmul = TensorHandle::matmul(result.0.clone(), irlog.0.clone());
+    //     let irloss = irmul.sum();
+    //     let loss = irloss.neg();
+    //     loss.backward();
+    //     sgd.update(&loss);
+    //     // loss = -np.sum(y_true * np.log(y_pred + epsilon))
+    // }
 }

@@ -7,3 +7,6 @@ edition = "2024"
 matrixmultiply = "0.3"
 rand = "0.8"
 num-traits = "0.2"
+
+[dev-dependencies]
+ndarray = "0.16.1"

@@ -3,13 +3,14 @@ use crate::core::error::{Result, TensorError};
 use crate::nn::initializers::*;
 use crate::core::traits::TensorFloat;
 use std::any::Any;
+use std::fmt::Debug;
 
 /// A trait representing a buffer of data on a specific device.
 ///
 /// This trait provides a hardware-agnostic interface for memory buffers
 /// that can store tensor data.
 // --- Storage Trait ---
-pub trait Storage: 'static + Any {
+pub trait Storage: 'static + Any + Debug {
     type Elem: TensorFloat;
 
     fn as_any(&self) -> &dyn Any;

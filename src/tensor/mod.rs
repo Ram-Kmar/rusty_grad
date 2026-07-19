@@ -154,9 +154,10 @@ impl<T: TensorFloat> fmt::Display for Tensor<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Tensor(shape={:?}, device={:?})",
+            "Tensor(shape={:?}, device={:?}, data={:?})",
             self.shape,
-            self.data.borrow().device()
+            self.data.borrow().device(),
+            self.data.borrow()
         )
     }
 }
