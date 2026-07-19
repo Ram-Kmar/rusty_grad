@@ -35,9 +35,9 @@ impl Gemm for f32 {
         c: *mut Self,
         rsc: isize,
         csc: isize,
-    ) {
+    ) { unsafe {
         matrixmultiply::sgemm(m, k, n, alpha, a, rsa, csa, b, rsb, csb, beta, c, rsc, csc);
-    }
+    }}
 }
 // impl Gemm for f64 {
 //     unsafe fn gemm(

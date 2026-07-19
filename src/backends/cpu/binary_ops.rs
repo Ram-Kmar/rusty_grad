@@ -3,26 +3,26 @@
 use crate::math::gemm::Gemm;
 // use crate::core::shared::{Shared, new_shared};
 // use crate::core::storage::{CpuStorage, Storage};
-// use crate::tensor::{Tensor, TensorHandle};
+// use crate::tensor::{TensorData, Tensor};
 use crate::core::traits::TensorFloat;
 // use std::cell::RefCell;
 // use std::ops::{Add, Div, Mul, Sub};
 
 pub fn add<T: TensorFloat>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
-    let data = a.iter().zip(b.iter()).map(|(&x, &y)| x + y).collect();
-    data
+    
+    a.iter().zip(b.iter()).map(|(&x, &y)| x + y).collect()
 }
 pub fn sub<T: TensorFloat>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
-    let data = a.iter().zip(b.iter()).map(|(&x, &y)| x - y).collect();
-    data
+    
+    a.iter().zip(b.iter()).map(|(&x, &y)| x - y).collect()
 }
 pub fn mul<T: TensorFloat>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
-    let data = a.iter().zip(b.iter()).map(|(&x, &y)| x * y).collect();
-    data
+    
+    a.iter().zip(b.iter()).map(|(&x, &y)| x * y).collect()
 }
 pub fn div<T: TensorFloat>(a: &Vec<T>, b: &Vec<T>) -> Vec<T> {
-    let data = a.iter().zip(b.iter()).map(|(&x, &y)| x / y).collect();
-    data
+    
+    a.iter().zip(b.iter()).map(|(&x, &y)| x / y).collect()
 }
 pub fn matmul<T: TensorFloat>(a: &Vec<T>, b: &Vec<T>, m: usize, k: usize, n: usize) -> Vec<T> {
     let mut c_data = vec![T::default(); m * n];
@@ -61,73 +61,73 @@ pub fn transpose<T: TensorFloat>(input: &Vec<T>, m: usize, n: usize) -> Vec<T> {
     // print!("transposed_data from transpose{:?}",&transposed_data);
     transposed_data
 }
-pub fn SV_add<T: TensorFloat>(input: &Vec<T>, scalar: T) -> Vec<T> {
+pub fn sv_add<T: TensorFloat>(input: &Vec<T>, scalar: T) -> Vec<T> {
     let size = input.len();
     let mut data = vec![T::from(0.0).unwrap(); size];
     let mut k = 0;
     for i in input.iter() {
         data[k] = *i + scalar;
-        k = k + 1;
+        k += 1;
     }
     data
 }
-pub fn SV_mul<T: TensorFloat>(input: &Vec<T>, scalar: T) -> Vec<T> {
+pub fn sv_mul<T: TensorFloat>(input: &Vec<T>, scalar: T) -> Vec<T> {
     let size = input.len();
     let mut data = vec![T::from(0.0).unwrap(); size];
     let mut k = 0;
     for i in input.iter() {
         data[k] = *i * scalar;
-        k = k + 1;
+        k += 1;
     }
     data
 }
-pub fn SV_sub<T: TensorFloat>(input: &Vec<T>, scalar: T) -> Vec<T> {
+pub fn sv_sub<T: TensorFloat>(input: &Vec<T>, scalar: T) -> Vec<T> {
     let size = input.len();
     let mut data = vec![T::from(0.0).unwrap(); size];
     let mut k = 0;
     for i in input.iter() {
         data[k] = *i - scalar;
-        k = k + 1;
+        k += 1;
     }
     data
 }
 
 pub fn add_derivate<T: TensorFloat>(parent_grad: &Vec<T>, grad_update: &Vec<T>) -> Vec<T> {
-    let data = parent_grad
+    
+    parent_grad
         .iter()
         .zip(grad_update.iter())
         .map(|(&x, &y)| x + y)
-        .collect();
-    data
+        .collect()
 }
 
 pub fn sub_derivate<T: TensorFloat>(parent_grad: &Vec<T>, grad_update: &Vec<T>) -> Vec<T> {
-    let data = parent_grad
+    
+    parent_grad
         .iter()
         .zip(grad_update.iter())
         .map(|(&x, &y)| x + y)
-        .collect();
-    data
+        .collect()
 }
 
 pub fn mul_derivate<T: TensorFloat>(parent_grad: &Vec<T>, grad_update: &Vec<T>) -> Vec<T> {
-    let data = parent_grad
+    
+    parent_grad
         .iter()
         .zip(grad_update.iter())
         .map(|(&x, &y)| x + y)
-        .collect();
-    data
+        .collect()
 }
 
 pub fn div_derivate<T: TensorFloat>(parent_grad: &Vec<T>, grad_update: &Vec<T>) -> Vec<T> {
-    let data = parent_grad
+    
+    parent_grad
         .iter()
         .zip(grad_update.iter())
         .map(|(&x, &y)| x + y)
-        .collect();
-    data
+        .collect()
 }
-pub fn SV_mul_derivate<T: TensorFloat>(_parent_grad: &Vec<T>, _grad_update: &Vec<T>) -> Vec<T> {
+pub fn sv_mul_derivate<T: TensorFloat>(_parent_grad: &Vec<T>, _grad_update: &Vec<T>) -> Vec<T> {
     // TODO: Fix this. Requires scalar value to be known.
     // let size = input.len();
     // let mut data = vec![T::from(scalar).unwrap(); size];
@@ -137,7 +137,7 @@ pub fn SV_mul_derivate<T: TensorFloat>(_parent_grad: &Vec<T>, _grad_update: &Vec
     //     k = k + 1;
     // }
     // data
-    panic!("SV_mul_derivate not implemented");
+    panic!("sv_mul_derivate not implemented");
 }
 
 pub fn matmul_derivate<T: TensorFloat>(

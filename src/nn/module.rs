@@ -1,8 +1,8 @@
-use crate::tensor::TensorHandle;
+use crate::tensor::Tensor;
 use std::fmt::Debug;
 use crate::core::traits::TensorFloat;
 
 pub trait Module<T: TensorFloat>: Debug {
-    fn forward(&self, input: TensorHandle<T>) -> TensorHandle<T>;
-    fn backward(&mut self, previous_grad: TensorHandle<T>) -> TensorHandle<T>;
+    fn forward(&self, input: Tensor<T>) -> Tensor<T>;
+    fn backward(&mut self, previous_grad: Tensor<T>) -> Tensor<T>;
 }

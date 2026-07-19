@@ -1,16 +1,16 @@
-use crate::tensor::{Tensor, TensorHandle};
+use crate::tensor::{TensorData, Tensor};
 use crate::core::traits::TensorFloat;
 
 pub struct HRM_Innercarry<T: TensorFloat> {
-    pub z_H: TensorHandle<T>,
-    pub z_L: TensorHandle<T>,
+    pub z_H: Tensor<T>,
+    pub z_L: Tensor<T>,
 }
 
 pub struct HRM_carry<T: TensorFloat> {
     pub inner_carry: HRM_Innercarry<T>,
-    pub steps: TensorHandle<T>,
-    pub halted: TensorHandle<T>,
-    pub current_data: TensorHandle<T>,
+    pub steps: Tensor<T>,
+    pub halted: Tensor<T>,
+    pub current_data: Tensor<T>,
 }
 
 pub struct HRM_config {
@@ -42,13 +42,13 @@ pub struct HRM_config {
 }
 
 pub struct HRM_Block<T: TensorFloat> {
-    pub self_attn: TensorHandle<T>, // Attention
-    pub mlp: TensorHandle<T>,       //mlp
+    pub self_attn: Tensor<T>, // Attention
+    pub mlp: Tensor<T>,       //mlp
     pub norm_eps: f32,
 }
 
 impl<T: TensorFloat> HRM_Block<T> {
-    pub fn forward(&self) -> TensorHandle<T> {
+    pub fn forward(&self) -> Tensor<T> {
         todo!()
     }
 }

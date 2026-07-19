@@ -8,7 +8,7 @@ use crate::core::error::{Result, TensorError};
 use crate::nn::initializers::uniform_;
 use crate::core::shared::{new_shared, Shared};
 use crate::core::storage::{CpuStorage, Storage};
-use crate::tensor::Tensor;
+use crate::tensor::TensorData;
 use crate::core::traits::TensorFloat;
 use std::any::Any;
 use std::cell::RefCell;
@@ -23,10 +23,10 @@ pub struct CpuBackend<T>(PhantomData<T>);
 impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
     type Storage = CpuStorage<T>;
 
-    fn zeros(shape: &[usize], device: Device) -> Result<Tensor<T>> {
+    fn zeros(shape: &[usize], _device: Device) -> Result<TensorData<T>> {
         let size = shape.iter().product();
         let storage = CpuStorage::zeros(size);
-        Ok(Tensor {
+        Ok(TensorData {
             shape: shape.to_vec(),
             data: new_shared(RefCell::new(storage)),
             grad: None,
@@ -37,10 +37,10 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         })
     }
 
-    fn ones(shape: &[usize], device: Device) -> Result<Tensor<T>> {
+    fn ones(shape: &[usize], _device: Device) -> Result<TensorData<T>> {
         let size = shape.iter().product();
         let storage = CpuStorage::ones(size);
-        Ok(Tensor {
+        Ok(TensorData {
             shape: shape.to_vec(),
             data: new_shared(RefCell::new(storage)),
             grad: None,
@@ -51,13 +51,16 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         })
     }
 
-    fn from_cpu_data(data: &[T], shape: &[usize], device: Device) -> Result<Tensor<T>> {
+    fn from_cpu_data(data: &[T], shape: &[usize], _device: Device) -> Result<TensorData<T>> {
         let size = shape.iter().product();
         if data.len() != size {
-            return Err(TensorError::ShapeMismatch);
+            return Err(TensorError::ShapeMismatch {
+                expected: vec![size],
+                found: vec![data.len()],
+            });
         }
         let storage = CpuStorage::from_data(data.to_vec());
-        Ok(Tensor {
+        Ok(TensorData {
             shape: shape.to_vec(),
             data: new_shared(RefCell::new(storage)),
             grad: None,
@@ -70,14 +73,14 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
 
     fn random_uniform(
         shape: &[usize],
-        device: Device,
+        _device: Device,
         min: f64,
         max: f64,
-    ) -> Result<Tensor<T>> {
+    ) -> Result<TensorData<T>> {
         let size = shape.iter().product();
         let data = uniform_::<T>(size, min as f32, max as f32);
         let storage = CpuStorage::from_data(data);
-        Ok(Tensor {
+        Ok(TensorData {
             shape: shape.to_vec(),
             data: new_shared(RefCell::new(storage)),
             grad: None,
@@ -88,7 +91,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         })
     }
 
-    fn add(a: &Tensor<T>, b: &Tensor<T>) -> Result<Tensor<T>> {
+    fn add(a: &TensorData<T>, b: &TensorData<T>) -> Result<TensorData<T>> {
         let a_storage = a
             .data
             .borrow()
@@ -107,7 +110,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         let new_data = crate::backends::cpu::binary_ops::add(a_storage.get_data(), b_storage.get_data());
         let new_storage = CpuStorage::from_data(new_data);
 
-        Ok(Tensor {
+        Ok(TensorData {
             shape: a.shape.clone(), // Assuming shapes are broadcastable/checked elsewhere
             data: new_shared(RefCell::new(new_storage)),
             grad: None,
@@ -115,13 +118,13 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
             operation: Some(vec!["add".to_string()]),
             is_child: true,
             parent: Some(vec![
-                new_shared(a.clone()), // Use explicit clone if Tensor doesn't implement Copy (it shouldn't)
+                new_shared(a.clone()), // Use explicit clone if TensorData doesn't implement Copy (it shouldn't)
                 new_shared(b.clone()),
             ]),
         })
     }
 
-    fn sub(a: &Tensor<T>, b: &Tensor<T>) -> Result<Tensor<T>> {
+    fn sub(a: &TensorData<T>, b: &TensorData<T>) -> Result<TensorData<T>> {
         let a_storage = a
             .data
             .borrow()
@@ -140,7 +143,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         let new_data = crate::backends::cpu::binary_ops::sub(a_storage.get_data(), b_storage.get_data());
         let new_storage = CpuStorage::from_data(new_data);
 
-        Ok(Tensor {
+        Ok(TensorData {
             shape: a.shape.clone(),
             data: new_shared(RefCell::new(new_storage)),
             grad: None,
@@ -151,7 +154,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         })
     }
 
-    fn mul(a: &Tensor<T>, b: &Tensor<T>) -> Result<Tensor<T>> {
+    fn mul(a: &TensorData<T>, b: &TensorData<T>) -> Result<TensorData<T>> {
         let a_storage = a
             .data
             .borrow()
@@ -170,7 +173,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         let new_data = crate::backends::cpu::binary_ops::mul(a_storage.get_data(), b_storage.get_data());
         let new_storage = CpuStorage::from_data(new_data);
 
-        Ok(Tensor {
+        Ok(TensorData {
             shape: a.shape.clone(),
             data: new_shared(RefCell::new(new_storage)),
             grad: None,
@@ -181,7 +184,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         })
     }
 
-    fn div(a: &Tensor<T>, b: &Tensor<T>) -> Result<Tensor<T>> {
+    fn div(a: &TensorData<T>, b: &TensorData<T>) -> Result<TensorData<T>> {
         let a_storage = a
             .data
             .borrow()
@@ -200,7 +203,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         let new_data = crate::backends::cpu::binary_ops::div(a_storage.get_data(), b_storage.get_data());
         let new_storage = CpuStorage::from_data(new_data);
 
-        Ok(Tensor {
+        Ok(TensorData {
             shape: a.shape.clone(),
             data: new_shared(RefCell::new(new_storage)),
             grad: None,
@@ -211,7 +214,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         })
     }
 
-    fn matmul(a: &Tensor<T>, b: &Tensor<T>) -> Result<Tensor<T>> {
+    fn matmul(a: &TensorData<T>, b: &TensorData<T>) -> Result<TensorData<T>> {
         let a_storage = a
             .data
             .borrow()
@@ -235,7 +238,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         let new_data = crate::backends::cpu::binary_ops::matmul(a_storage.get_data(), b_storage.get_data(), m, k, n);
         let new_storage = CpuStorage::from_data(new_data);
 
-        Ok(Tensor {
+        Ok(TensorData {
             shape: vec![m, n],
             data: new_shared(RefCell::new(new_storage)),
             grad: None,
@@ -246,7 +249,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         })
     }
 
-    fn relu(input: &Tensor<T>) -> Result<Tensor<T>> {
+    fn relu(input: &TensorData<T>) -> Result<TensorData<T>> {
         let storage = input
             .data
             .borrow()
@@ -258,7 +261,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         let new_data = crate::backends::cpu::unary_ops::relu(storage.get_data());
         let new_storage = CpuStorage::from_data(new_data);
 
-        Ok(Tensor {
+        Ok(TensorData {
             shape: input.shape.clone(),
             data: new_shared(RefCell::new(new_storage)),
             grad: None,
@@ -269,7 +272,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         })
     }
 
-    fn exp(input: &Tensor<T>) -> Result<Tensor<T>> {
+    fn exp(input: &TensorData<T>) -> Result<TensorData<T>> {
         let storage = input
             .data
             .borrow()
@@ -281,7 +284,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         let new_data = crate::backends::cpu::unary_ops::exp(storage.get_data());
         let new_storage = CpuStorage::from_data(new_data);
 
-        Ok(Tensor {
+        Ok(TensorData {
             shape: input.shape.clone(),
             data: new_shared(RefCell::new(new_storage)),
             grad: None,
@@ -292,7 +295,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         })
     }
 
-    fn log(input: &Tensor<T>) -> Result<Tensor<T>> {
+    fn log(input: &TensorData<T>) -> Result<TensorData<T>> {
         let storage = input
             .data
             .borrow()
@@ -304,7 +307,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         let new_data = crate::backends::cpu::unary_ops::log(storage.get_data());
         let new_storage = CpuStorage::from_data(new_data);
 
-        Ok(Tensor {
+        Ok(TensorData {
             shape: input.shape.clone(),
             data: new_shared(RefCell::new(new_storage)),
             grad: None,
@@ -315,7 +318,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         })
     }
 
-    fn transpose(input: &Tensor<T>) -> Result<Tensor<T>> {
+    fn transpose(input: &TensorData<T>) -> Result<TensorData<T>> {
         let storage = input
             .data
             .borrow()
@@ -330,7 +333,7 @@ impl<T: TensorFloat> Backend<T> for CpuBackend<T> {
         let new_data = crate::backends::cpu::binary_ops::transpose(storage.get_data(), m, n);
         let new_storage = CpuStorage::from_data(new_data);
 
-        Ok(Tensor {
+        Ok(TensorData {
             shape: vec![n, m], // Swap dims
             data: new_shared(RefCell::new(new_storage)),
             grad: None,
@@ -362,12 +365,11 @@ impl<T: TensorFloat> CpuBackprop<T> {
     }
 
     pub fn matmul_derivate(
-        aparent_data: Shared<Tensor<T>>,
-        parent: Shared<Tensor<T>>,
-        child: Shared<Tensor<T>>,
+        aparent_data: Shared<TensorData<T>>,
+        parent: Shared<TensorData<T>>,
+        child: Shared<TensorData<T>>,
         swap: bool,
     ) {
-        let mut data: Vec<T> = Vec::new();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let input1 = temp1.get_data();
@@ -377,36 +379,35 @@ impl<T: TensorFloat> CpuBackprop<T> {
             aparent_data.shape[1],
         );
 
-        if swap == true {
-            data = crate::backends::cpu::binary_ops::matmul(
+        let data = if swap {
+            crate::backends::cpu::binary_ops::matmul(
                 input1,
                 &input2,
                 child.shape[0],
                 child.shape[1],
                 aparent_data.shape[0],
-            );
+            )
         } else {
-            data = crate::backends::cpu::binary_ops::matmul(
+            crate::backends::cpu::binary_ops::matmul(
                 &input2,
                 input1,
                 aparent_data.shape[1],
                 aparent_data.shape[0],
                 child.shape[1],
-            );
-        }
+            )
+        };
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
         let mut parent_grad = temp1.borrow_mut();
         parent_grad.add_grad(data);
     }
 
-    pub fn relu_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
-        let mut data: Vec<T> = Vec::new();
+    pub fn relu_derivative(parent: Shared<TensorData<T>>, child: Shared<TensorData<T>>) {
         let temp0 = parent.data.clone();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::unary_ops::relu_derivative(temp0.borrow().get_data(), child_grad);
+        let data = crate::backends::cpu::unary_ops::relu_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -414,25 +415,23 @@ impl<T: TensorFloat> CpuBackprop<T> {
         parent_grad.add_grad(data);
     }
 
-    pub fn neg_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
-        let mut data: Vec<T> = Vec::new();
+    pub fn neg_derivative(parent: Shared<TensorData<T>>, child: Shared<TensorData<T>>) {
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::unary_ops::neg_derivative(child_grad);
+        let data = crate::backends::cpu::unary_ops::neg_derivative(child_grad);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
         let mut parent_grad = temp1.borrow_mut();
         parent_grad.add_grad(data);
     }
 
-    pub fn sigmodi_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
-        let mut data: Vec<T> = Vec::new();
+    pub fn sigmodi_derivative(parent: Shared<TensorData<T>>, child: Shared<TensorData<T>>) {
         let temp0 = parent.data.clone();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::unary_ops::sigmoid_derivative(temp0.borrow().get_data(), child_grad);
+        let data = crate::backends::cpu::unary_ops::sigmoid_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -440,13 +439,12 @@ impl<T: TensorFloat> CpuBackprop<T> {
         parent_grad.add_grad(data);
     }
 
-    pub fn tanh_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
-        let mut data: Vec<T> = Vec::new();
+    pub fn tanh_derivative(parent: Shared<TensorData<T>>, child: Shared<TensorData<T>>) {
         let temp0 = parent.data.clone();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::unary_ops::tanh_derivative(temp0.borrow().get_data(), child_grad);
+        let data = crate::backends::cpu::unary_ops::tanh_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -454,13 +452,12 @@ impl<T: TensorFloat> CpuBackprop<T> {
         parent_grad.add_grad(data);
     }
 
-    pub fn exp_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
-        let mut data: Vec<T> = Vec::new();
+    pub fn exp_derivative(parent: Shared<TensorData<T>>, child: Shared<TensorData<T>>) {
         let temp0 = parent.data.clone();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::unary_ops::exp_derivative(temp0.borrow().get_data(), child_grad);
+        let data = crate::backends::cpu::unary_ops::exp_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -468,13 +465,12 @@ impl<T: TensorFloat> CpuBackprop<T> {
         parent_grad.add_grad(data);
     }
 
-    pub fn log_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
-        let mut data: Vec<T> = Vec::new();
+    pub fn log_derivative(parent: Shared<TensorData<T>>, child: Shared<TensorData<T>>) {
         let temp0 = parent.data.clone();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::unary_ops::log_derivative(temp0.borrow().get_data(), child_grad);
+        let data = crate::backends::cpu::unary_ops::log_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -482,13 +478,12 @@ impl<T: TensorFloat> CpuBackprop<T> {
         parent_grad.add_grad(data);
     }
 
-    pub fn abs_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
-        let mut data: Vec<T> = Vec::new();
+    pub fn abs_derivative(parent: Shared<TensorData<T>>, child: Shared<TensorData<T>>) {
         let temp0 = parent.data.clone();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::unary_ops::abs_derivative(temp0.borrow().get_data(), child_grad);
+        let data = crate::backends::cpu::unary_ops::abs_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -496,13 +491,12 @@ impl<T: TensorFloat> CpuBackprop<T> {
         parent_grad.add_grad(data);
     }
 
-    pub fn square_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
-        let mut data: Vec<T> = Vec::new();
+    pub fn square_derivative(parent: Shared<TensorData<T>>, child: Shared<TensorData<T>>) {
         let temp0 = parent.data.clone();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::unary_ops::square_derivative(temp0.borrow().get_data(), child_grad);
+        let data = crate::backends::cpu::unary_ops::square_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -510,13 +504,12 @@ impl<T: TensorFloat> CpuBackprop<T> {
         parent_grad.add_grad(data);
     }
 
-    pub fn sqrt_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
-        let mut data: Vec<T> = Vec::new();
+    pub fn sqrt_derivative(parent: Shared<TensorData<T>>, child: Shared<TensorData<T>>) {
         let temp0 = parent.data.clone();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::unary_ops::sqrt_derivative(temp0.borrow().get_data(), child_grad);
+        let data = crate::backends::cpu::unary_ops::sqrt_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -524,13 +517,12 @@ impl<T: TensorFloat> CpuBackprop<T> {
         parent_grad.add_grad(data);
     }
 
-    pub fn mean_derivative(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
-        let mut data: Vec<T> = Vec::new();
+    pub fn mean_derivative(parent: Shared<TensorData<T>>, child: Shared<TensorData<T>>) {
         let temp0 = parent.data.clone();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::unary_ops::mean_derivative(temp0.borrow().get_data(), child_grad);
+        let data = crate::backends::cpu::unary_ops::mean_derivative(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -538,17 +530,16 @@ impl<T: TensorFloat> CpuBackprop<T> {
         parent_grad.add_grad(data);
     }
 
-    pub fn SV_mul_derivate(
-        aparent_data: Shared<Tensor<T>>,
-        parent: Shared<Tensor<T>>,
-        child: Shared<Tensor<T>>,
+    pub fn sv_mul_derivate(
+        _aparent_data: Shared<TensorData<T>>,
+        parent: Shared<TensorData<T>>,
+        child: Shared<TensorData<T>>,
     ) {
-        let mut data: Vec<T> = Vec::new();
         let temp0 = parent.data.clone();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::binary_ops::SV_mul_derivate(temp0.borrow().get_data(), child_grad);
+        let data = crate::backends::cpu::binary_ops::sv_mul_derivate(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();
@@ -556,13 +547,12 @@ impl<T: TensorFloat> CpuBackprop<T> {
         parent_grad.add_grad(data);
     }
 
-    pub fn SV_add_derivate(parent: Shared<Tensor<T>>, child: Shared<Tensor<T>>) {
-        let mut data: Vec<T> = Vec::new();
+    pub fn sv_add_derivate(parent: Shared<TensorData<T>>, child: Shared<TensorData<T>>) {
         let temp0 = parent.data.clone();
         let temp1 = child.grad.as_ref().unwrap().clone();
         let temp1 = temp1.borrow();
         let child_grad = temp1.get_data();
-        data = crate::backends::cpu::binary_ops::SV_mul_derivate(temp0.borrow().get_data(), child_grad);
+        let data = crate::backends::cpu::binary_ops::sv_mul_derivate(temp0.borrow().get_data(), child_grad);
         drop(temp0);
         drop(temp1);
         let temp1 = parent.grad.as_ref().unwrap().clone();

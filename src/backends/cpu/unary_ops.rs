@@ -1,5 +1,5 @@
 use crate::core::storage::Storage;
-use crate::core::{shared::Shared, traits::TensorFloat};
+use crate::core::traits::TensorFloat;
 use std::iter::Sum;
 
 pub fn relu<T: TensorFloat>(input: &Vec<T>) -> Vec<T> {

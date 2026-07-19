@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use crate::nn::embedding::Embedding;
 use std::rc::Rc;
 use crate::core::traits::TensorFloat;
-use crate::tensor::TensorHandle;
+use crate::tensor::Tensor;
 
 // Define the mode enum with no associated data
 #[derive(Debug)]
@@ -78,13 +78,13 @@ impl<T: TensorFloat + 'static> Model<T> {
         // layer
         Embedding::new(row,colums)
     }
-    pub fn backward(&self, loss: &TensorHandle<T>) {
+    pub fn backward(&self, loss: &Tensor<T>) {
         loss.backward();
     }
 }
 
 // impl<T: Float> Module<T> for Model<T> {
-//     fn forward(&mut self,input: Tensor) -> Tensor {
+//     fn forward(&mut self,input: TensorData) -> TensorData {
 //         for layer in self.layers.iter_mut() {
 //             input = layer.forward(input);
 //         }

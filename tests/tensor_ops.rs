@@ -1,6 +1,6 @@
 use ndarray::{Array, Array2, IxDyn};
 use rusty_grad::core::device::Device;
-use rusty_grad::tensor::{Tensor, TensorHandle};
+use rusty_grad::tensor::{TensorData, Tensor};
 use rusty_grad::assert_tensor_close;
 
 #[test]
@@ -10,8 +10,8 @@ fn test_tensor_add() {
     let data_b = vec![5.0_f32, 6.0, 7.0, 8.0];
     
     // RustyGrad Tensors
-    let tensor_a = Tensor::from_data(data_a.clone(), shape.clone(), false, Device::Cpu);
-    let tensor_b = Tensor::from_data(data_b.clone(), shape.clone(), false, Device::Cpu);
+    let tensor_a = Tensor::<f32>::from_data(data_a.clone(), shape.clone(), false, Device::Cpu);
+    let tensor_b = Tensor::<f32>::from_data(data_b.clone(), shape.clone(), false, Device::Cpu);
     let tensor_c = &tensor_a + &tensor_b;
     
     // ndarray Reference
@@ -46,9 +46,9 @@ fn test_tensor_matmul() {
     let data_b = vec![7.0_f32, 8.0, 9.0, 10.0, 11.0, 12.0];
     
     // RustyGrad Tensors
-    let tensor_a = Tensor::from_data(data_a.clone(), shape_a.clone(), false, Device::Cpu);
-    let tensor_b = Tensor::from_data(data_b.clone(), shape_b.clone(), false, Device::Cpu);
-    let tensor_c = TensorHandle::matmul(tensor_a.0.clone(), tensor_b.0.clone());
+    let tensor_a = Tensor::<f32>::from_data(data_a.clone(), shape_a.clone(), false, Device::Cpu);
+    let tensor_b = Tensor::<f32>::from_data(data_b.clone(), shape_b.clone(), false, Device::Cpu);
+    let tensor_c = Tensor::matmul(tensor_a.0.clone(), tensor_b.0.clone());
     
     // ndarray Reference
     let nd_a = Array2::from_shape_vec((2, 3), data_a).unwrap();
@@ -80,8 +80,8 @@ fn test_tensor_sub() {
     let data_b = vec![1.0_f32, 2.0, 3.0, 4.0];
 
     // 2. RustyGrad Operation
-    let tensor_a = Tensor::from_data(data_a.clone(), shape.clone(), false, Device::Cpu);
-    let tensor_b = Tensor::from_data(data_b.clone(), shape.clone(), false, Device::Cpu);
+    let tensor_a = Tensor::<f32>::from_data(data_a.clone(), shape.clone(), false, Device::Cpu);
+    let tensor_b = Tensor::<f32>::from_data(data_b.clone(), shape.clone(), false, Device::Cpu);
     let tensor_c = &tensor_a - &tensor_b; // Subtraction here!
 
     // 3. ndarray Reference Operation

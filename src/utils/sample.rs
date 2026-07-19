@@ -1,8 +1,8 @@
-use crate::tensor::Tensor;
+use crate::tensor::TensorData;
 
 use crate::core::traits::TensorFloat;
 
-impl<T: TensorFloat> Tensor<T> {
+impl<T: TensorFloat> TensorData<T> {
     pub fn print(&self){
         for i in &self.data{
             println!("this is a from the sample.rs {}",i);

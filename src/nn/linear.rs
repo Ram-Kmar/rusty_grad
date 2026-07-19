@@ -1,7 +1,7 @@
 // use crate::nn::module::Module;
 use crate::core::device::Device;
 use crate::core::shared::new_shared;
-use crate::tensor::{Tensor, TensorHandle};
+use crate::tensor::{TensorData, Tensor};
 use crate::core::traits::TensorFloat;
 
 /// Represents a linear transformation layer.
@@ -13,14 +13,14 @@ pub struct Linear<T: TensorFloat> {
     pub output_size: usize,
     /// A boolean flag that determines whether the layer includes a bias term.
     pub bais_require: bool,
-    /// The learnable weights of the layer, stored as a `Tensor`.
-    pub weights: TensorHandle<T>,
+    /// The learnable weights of the layer, stored as a `TensorData`.
+    pub weights: Tensor<T>,
     /// The gradient of the loss with respect to the `weights` tensor.
-    pub weights_grad: TensorHandle<T>,
-    /// An optional `Tensor` representing the bias term. It is `None` if `bais_require` is `false`.
-    pub bais: Option<TensorHandle<T>>,
+    pub weights_grad: Tensor<T>,
+    /// An optional `TensorData` representing the bias term. It is `None` if `bais_require` is `false`.
+    pub bais: Option<Tensor<T>>,
     /// The gradient of the loss with respect to the `bais` tensor.
-    pub bais_grad: TensorHandle<T>,
+    pub bais_grad: Tensor<T>,
 }
 
 // impl<T: TensorFloat> Default for Linear<T> {
@@ -29,10 +29,10 @@ pub struct Linear<T: TensorFloat> {
 //             input_size: 0,
 //             output_size: 0,
 //             bais_require: false,
-//             weights: TensorHandle::(),
-//             weights_grad: TensorHandle::new(),
+//             weights: Tensor::(),
+//             weights_grad: Tensor::new(),
 //             bais: None,
-//             bais_grad: TensorHandle::new(),
+//             bais_grad: Tensor::new(),
 //         }
 //     }
 // }
@@ -52,17 +52,17 @@ impl<T: TensorFloat> Linear<T> {
                 input_size: input_size,
                 output_size: output_size,
                 bais_require: true,
-                weights: TensorHandle::new(shape, true, device),
-                weights_grad: TensorHandle::new(shape, true, device),
-                bais: Some(TensorHandle::new(shape, true, device)),
-                bais_require: TensorHandle::new(shape, true, device),
+                weights: Tensor::new(shape, true, device),
+                weights_grad: Tensor::new(shape, true, device),
+                bais: Some(Tensor::new(shape, true, device)),
+                bais_require: Tensor::new(shape, true, device),
             }
         } else {
             Self {
                 input_size: input_size,
                 output_size: output_size,
                 bais_require: false,
-                weights: TensorHandle::new(shape.clone(), true, "Linear".to_string()),
+                weights: Tensor::new(shape.clone(), true, "Linear".to_string()),
                 bais: None,
                 ..Self::default()
             }
@@ -75,7 +75,7 @@ impl<T: TensorFloat> Linear<T> {
 //     /// # Arguments
 //     ///
 //     /// * `input` - The input tensor.
-//     fn forward(&self, input: TensorHandle<T>) -> TensorHandle<T> {
+//     fn forward(&self, input: Tensor<T>) -> Tensor<T> {
 //         let mut output = input * self.weights.clone();
 //         if self.bais_require {
 //             output = output + self.bais.as_ref().unwrap().clone();
@@ -88,8 +88,8 @@ impl<T: TensorFloat> Linear<T> {
 //     /// # Arguments
 //     ///
 //     /// * `previous_grad` - The gradient from the next layer.
-//     fn backward(&mut self, previous_grad: TensorHandle<T>) -> TensorHandle<T> {
-//         TensorHandle(new_shared(Tensor::init_zeros(
+//     fn backward(&mut self, previous_grad: Tensor<T>) -> Tensor<T> {
+//         Tensor(new_shared(TensorData::init_zeros(
 //             self.weights.shape.clone(),
 //             false,
 //         )))

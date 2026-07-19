@@ -1,7 +1,5 @@
-use crate::backends::cpu;
 // use crate::core::storage::{CpuStorage, Storage};
-use crate::{tensor::TensorHandle, core::traits::TensorFloat};
-use crate::backends::cpu::binary_ops;
+use crate::{tensor::Tensor, core::traits::TensorFloat};
 
 pub struct SGD<T: TensorFloat> {
     pub learning_rate: T,
@@ -16,12 +14,12 @@ impl<T: TensorFloat> SGD<T> {
             .collect()
     }
 
-    pub fn update(&self, initial_point: &TensorHandle<T>) {
+    pub fn update(&self, initial_point: &Tensor<T>) {
         let sorted = initial_point.build_topological_sort();
         for node in sorted.iter().rev() {
             // println!("this is first element{:?}", node.data.borrow().get_data());
             let lr = self.learning_rate;
-            let data = TensorHandle::SV_mul(node.clone(), lr, "grad".to_string());
+            let data = Tensor::sv_mul(node.clone(), lr, "grad".to_string());
             let data =
                 crate::backends::cpu::binary_ops::sub(node.data.borrow().get_data(), data.data.borrow().get_data());
             // println!("this is data{:?}", data);

@@ -27,7 +27,7 @@ macro_rules! assert_tensor_close {
 
             assert!(
                 diff <= tol,
-                "Tensor mismatch at index {}!\nOurs: {}\nExpected: {}\nDifference: {} > Tolerance: {}",
+                "TensorData mismatch at index {}!\nOurs: {}\nExpected: {}\nDifference: {} > Tolerance: {}",
                 i, o_f64, e_f64, diff, tol
             );
         }

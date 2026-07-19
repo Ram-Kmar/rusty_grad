@@ -1,20 +1,19 @@
 // use crate::nn::optimizer::sgd;
 use crate::backends::cpu::CpuBackprop;
-use crate::core::shared::{Shared, new_shared};
+use crate::core::shared::Shared;
 // use crate::core::storage::CpuStorage; // No longer needed for derivatives
-use crate::tensor::{Tensor, TensorHandle};
+use crate::tensor::{TensorData, Tensor};
 use crate::core::traits::TensorFloat;
-use std::clone;
 use std::collections::HashSet;
 
-impl<T: TensorFloat> TensorHandle<T> {
+impl<T: TensorFloat> Tensor<T> {
     pub fn backward(&self) {
         let sorted = self.build_topological_sort();
         self.grad.as_ref().unwrap().clone().borrow_mut().fill_ones();
         for node in sorted.iter().rev() {
             // println!("number of node it passed");
             // println!("node{}", node);
-            if node.is_child == true {
+            if node.is_child {
                 match node
                     .operation
                     .as_ref()
@@ -110,26 +109,26 @@ impl<T: TensorFloat> TensorHandle<T> {
                         let another_parent_data = node.parent.as_ref().unwrap()[0].clone();
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuBackprop::SV_mul_derivate(another_parent_data, parent, child);
+                        CpuBackprop::sv_mul_derivate(another_parent_data, parent, child);
                     }
                     "SV_add" => {
                         let parent = node.parent.as_ref().unwrap()[0].clone();
                         let child = node.0.clone();
-                        CpuBackprop::SV_add_derivate(parent, child);
+                        CpuBackprop::sv_add_derivate(parent, child);
                     }
                     _ => {}
                 }
             }
         }
     }
-    pub fn build_topological_sort(&self) -> Vec<TensorHandle<T>> {
+    pub fn build_topological_sort(&self) -> Vec<Tensor<T>> {
         let mut sorted = Vec::new();
         let mut visited = HashSet::new();
 
         fn visit<T: TensorFloat>(
-            node: &TensorHandle<T>,
-            sorted: &mut Vec<TensorHandle<T>>,
-            visited: &mut HashSet<*const Tensor<T>>,
+            node: &Tensor<T>,
+            sorted: &mut Vec<Tensor<T>>,
+            visited: &mut HashSet<*const TensorData<T>>,
         ) {
             let node_ptr = Shared::as_ptr(&node.0);
             if visited.contains(&node_ptr) {
@@ -139,7 +138,7 @@ impl<T: TensorFloat> TensorHandle<T> {
 
             if let Some(parents) = &node.parent {
                 for parent in parents {
-                    visit(&TensorHandle(parent.clone()), sorted, visited);
+                    visit(&Tensor(parent.clone()), sorted, visited);
                 }
             }
             sorted.push(node.clone());
@@ -150,7 +149,7 @@ impl<T: TensorFloat> TensorHandle<T> {
     }
 }
 
-// pub fn sub_backward<T: TensorFloat>(grad_output: &[T], _a: &Tensor<T>, _b: &Tensor<T>) -> (Vec<T>, Vec<T>) {
+// pub fn sub_backward<T: TensorFloat>(grad_output: &[T], _a: &TensorData<T>, _b: &TensorData<T>) -> (Vec<T>, Vec<T>) {
 //     // dL/da = dL/dc * dc/da = dL/dc * 1
 //     // dL/db = dL/dc * dc/db = dL/dc * -1
 //     let grad_a = grad_output.to_vec();
@@ -158,7 +157,7 @@ impl<T: TensorFloat> TensorHandle<T> {
 //     (grad_a, grad_b)
 // }
 //
-// pub fn div_backward<T: TensorFloat>(grad_output: &[T], a: &Tensor<T>, b: &Tensor<T>) -> (Vec<T>, Vec<T>) {
+// pub fn div_backward<T: TensorFloat>(grad_output: &[T], a: &TensorData<T>, b: &TensorData<T>) -> (Vec<T>, Vec<T>) {
 //     // dL/da = dL/dc * dc/da = dL/dc * (1/b)
 //     // dL/db = dL/dc * dc/db = dL/dc * (-a / b^2)
 //     let grad_a = b
@@ -177,7 +176,7 @@ impl<T: TensorFloat> TensorHandle<T> {
 //     (grad_a, grad_b)
 // }
 //
-// pub fn relu_backward<T: TensorFloat>(grad_output: &[T], input: &Tensor<T>) -> Vec<T> {
+// pub fn relu_backward<T: TensorFloat>(grad_output: &[T], input: &TensorData<T>) -> Vec<T> {
 //     // dL/dx = dL/dy * dy/dx
 //     // dy/dx = 1 if x > 0, 0 otherwise
 //     input
@@ -188,7 +187,7 @@ impl<T: TensorFloat> TensorHandle<T> {
 //         .collect()
 // }
 //
-// pub fn sigmoid_backward<T: TensorFloat>(grad_output: &[T], input: &Tensor<T>) -> Vec<T> {
+// pub fn sigmoid_backward<T: TensorFloat>(grad_output: &[T], input: &TensorData<T>) -> Vec<T> {
 //     // dL/dx = dL/dy * dy/dx
 //     // dy/dx = sigmoid(x) * (1 - sigmoid(x))
 //     let s = input
@@ -202,7 +201,7 @@ impl<T: TensorFloat> TensorHandle<T> {
 //         .collect()
 // }
 //
-// pub fn tanh_backward<T: TensorFloat>(grad_output: &[T], input: &Tensor<T>) -> Vec<T> {
+// pub fn tanh_backward<T: TensorFloat>(grad_output: &[T], input: &TensorData<T>) -> Vec<T> {
 //     // dL/dx = dL/dy * dy/dx
 //     // dy/dx = 1 - tanh^2(x)
 //     let t = input.data.iter().map(|&x| x.tanh()).collect::<Vec<T>>();
@@ -212,7 +211,7 @@ impl<T: TensorFloat> TensorHandle<T> {
 //         .collect()
 // }
 //
-// pub fn exp_backward<T: TensorFloat>(grad_output: &[T], input: &Tensor<T>) -> Vec<T> {
+// pub fn exp_backward<T: TensorFloat>(grad_output: &[T], input: &TensorData<T>) -> Vec<T> {
 //     // dL/dx = dL/dy * dy/dx
 //     // dy/dx = exp(x)
 //     input
@@ -223,7 +222,7 @@ impl<T: TensorFloat> TensorHandle<T> {
 //         .collect()
 // }
 //
-// pub fn log_backward<T: TensorFloat>(grad_output: &[T], input: &Tensor<T>) -> Vec<T> {
+// pub fn log_backward<T: TensorFloat>(grad_output: &[T], input: &TensorData<T>) -> Vec<T> {
 //     // dL/dx = dL/dy * dy/dx
 //     // dy/dx = 1/x
 //     input
@@ -234,13 +233,13 @@ impl<T: TensorFloat> TensorHandle<T> {
 //         .collect()
 // }
 //
-// pub fn neg_backward<T: TensorFloat>(grad_output: &[T], _input: &Tensor<T>) -> Vec<T> {
+// pub fn neg_backward<T: TensorFloat>(grad_output: &[T], _input: &TensorData<T>) -> Vec<T> {
 //     // dL/dx = dL/dy * dy/dx
 //     // dy/dx = -1
 //     grad_output.iter().map(|&g| -g).collect()
 // }
 //
-// pub fn abs_backward<T: TensorFloat>(grad_output: &[T], input: &Tensor<T>) -> Vec<T> {
+// pub fn abs_backward<T: TensorFloat>(grad_output: &[T], input: &TensorData<T>) -> Vec<T> {
 //     // dL/dx = dL/dy * dy/dx
 //     // dy/dx = 1 if x > 0, -1 if x < 0, 0 if x = 0
 //     input
@@ -259,7 +258,7 @@ impl<T: TensorFloat> TensorHandle<T> {
 //         .collect()
 // }
 //
-// pub fn square_backward<T: TensorFloat>(grad_output: &[T], input: &Tensor<T>) -> Vec<T> {
+// pub fn square_backward<T: TensorFloat>(grad_output: &[T], input: &TensorData<T>) -> Vec<T> {
 //     // dL/dx = dL/dy * dy/dx
 //     // dy/dx = 2x
 //     input
@@ -270,7 +269,7 @@ impl<T: TensorFloat> TensorHandle<T> {
 //         .collect()
 // }
 //
-// pub fn sqrt_backward<T: TensorFloat>(grad_output: &[T], input: &Tensor<T>) -> Vec<T> {
+// pub fn sqrt_backward<T: TensorFloat>(grad_output: &[T], input: &TensorData<T>) -> Vec<T> {
 //     // dL/dx = dL/dy * dy/dx
 //     // dy/dx = 1 / (2 * sqrt(x))
 //     input
@@ -281,7 +280,7 @@ impl<T: TensorFloat> TensorHandle<T> {
 //         .collect()
 // }
 //
-// pub fn transpose_backward<T: TensorFloat>(grad_output: &[T], input: &Tensor<T>) -> Vec<T> {
+// pub fn transpose_backward<T: TensorFloat>(grad_output: &[T], input: &TensorData<T>) -> Vec<T> {
 //     // The backward of a transpose is a transpose
 //     let mut grad_input = vec![T::from(0.0).unwrap(); grad_output.len()];
 //     let rows = input.shape[0];
@@ -294,13 +293,13 @@ impl<T: TensorFloat> TensorHandle<T> {
 //     grad_input
 // }
 //
-// // pub fn mean_backward<T: TensorFloat>(grad_output: &[T], a: &Tensor<T>) -> Vec<T> {
+// // pub fn mean_backward<T: TensorFloat>(grad_output: &[T], a: &TensorData<T>) -> Vec<T> {
 // //     let n = T::from(a.data.len()).unwrap();
 // //     let grad_a = grad_output.iter().map(|g| *g / n).collect();
 // //     grad_a
 // // }
 //
-// pub fn mean_backward<T: TensorFloat>(grad_output: &[T], a: &Tensor<T>) -> Vec<T> {
+// pub fn mean_backward<T: TensorFloat>(grad_output: &[T], a: &TensorData<T>) -> Vec<T> {
 //     let n = T::from(a.data.len()).unwrap();
 //     let grad_val = grad_output[0] / n;
 //     vec![grad_val; a.data.len()]
