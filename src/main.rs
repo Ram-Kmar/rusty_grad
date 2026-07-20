@@ -4,9 +4,6 @@ use rusty_grad::tensor::{TensorData, Tensor};
 use rusty_grad::tensor::ops::unary::TensorUrnaryOps;
 use rusty_grad::core::traits::TensorFloat;
 
-pub fn give_t<T: TensorFloat>(input: f64) -> T {
-    T::from(input).unwrap()
-}
 
 fn main() {
     let x = Tensor::<f32>::new(vec![5,5],true, Device::Cpu);
