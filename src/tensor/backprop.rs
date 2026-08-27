@@ -1,7 +1,5 @@
-// use crate::nn::optimizer::sgd;
 use crate::backends::cpu::CpuBackprop;
 use crate::core::shared::Shared;
-// use crate::core::storage::CpuStorage; // No longer needed for derivatives
 use crate::tensor::{TensorData, Tensor};
 use crate::core::traits::TensorFloat;
 use std::collections::HashSet;

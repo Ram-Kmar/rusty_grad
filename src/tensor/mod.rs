@@ -5,10 +5,8 @@ use crate::backends::Backend;
 use crate::backends::cpu::CpuBackend;
 use crate::core::device::Device;
 use crate::core::storage::Storage;
-// use crate::tensor::backprop::mul_backward;
 use crate::core::traits::TensorFloat;
 use std::cell::RefCell;
-// use std::collections::HashSet;
 use std::fmt::{self};
 use std::ops::Deref;
 

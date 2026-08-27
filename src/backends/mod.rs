@@ -1,4 +1,5 @@
 pub mod cpu;
+pub mod kind;
 // pub mod cuda;
 
 use crate::core::device::Device;
